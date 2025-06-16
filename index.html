@@ -900,6 +900,15 @@ border-radius: 12px;
     <div><strong>Доставка FMC-сим карт (разово)</strong></div>
     <div id="total-delivery">0</div>
   </div>
+	    <div class="result-row">
+  <div>
+    <strong>Гарантийный платёж (разово, возвратный)</strong>
+    <span class="info-icon">i</span>
+    <div class="tooltip" id="tooltip-guarantee"></div>
+  </div>
+  <div id="total-guarantee">0</div>
+</div>
+
 </div>
 
   </div>
@@ -1339,6 +1348,24 @@ function runCascade(startField) {
     // 5. Автоматический пересчёт NomeraVATSVsego
     const sumAll = parseVal("NomeraVATS") + parseVal("NomeraVATS8800") + parseVal("KolvoFMC");
     document.getElementById("NomeraVATSVsego").value = sumAll;
+
+	      // 6. Гарантийный платёж
+    const monthly = parseVal("total-monthly");
+    const minimal = parseVal("total-minimal");
+    const connection = parseVal("total-connection"); //нужно ли? 
+
+    const baseSum = monthly + minimal + connection;
+    const guarantee = baseSum < 4000 ? 4000 : baseSum;
+    document.getElementById('total-guarantee').textContent = guarantee.toFixed(0);
+
+    const maxLimit = baseSum <= 10000
+      ? guarantee * 2
+      : guarantee * 1.7;
+
+    document.getElementById('tooltip-guarantee').textContent =
+      `Будет "заморожен" на счете как гарантия оплаты и возвращен или учтен при закрытии договора. ` +
+      `Максимальный порог кредитного лимита: ${maxLimit.toFixed(0)} руб.`;
+
   }
 
 function getCheckbox(id) {
