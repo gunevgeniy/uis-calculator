@@ -1100,7 +1100,9 @@ NomeraVATS8800: {
 KolvoSvoihNomerov: {
   cost: () => {
     const val = getNumber("KolvoSvoihNomerov");
-    return val < 11 ? val * 200 : val * 100;
+    if (val < 2) return 0;
+    if (val < 11) return (val - 1) * 200;
+    return (9 * 200) + ((val - 10) * 100);
   }
 },
 KolvoFMC: {
