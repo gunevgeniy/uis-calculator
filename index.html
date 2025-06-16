@@ -1391,7 +1391,7 @@ function runCascade(startField) {
     const connection = parseVal("total-connection"); //нужно ли? 
 
     const baseSum = monthly + minimal + connection;
-    const guarantee = baseSum < 4000 ? 4000 : baseSum;
+    const guarantee = baseSum > 0 ? (baseSum < 4000 ? 4000 : baseSum) : 0;
     document.getElementById('total-guarantee').textContent = guarantee.toFixed(0);
 
     const maxLimit = baseSum <= 10000
