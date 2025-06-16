@@ -123,7 +123,17 @@ input[type="number"] {
   font-size: 14px;
   box-sizing: border-box;
 }
+	  
+input[type="number"]::placeholder {
+  color: #aaa;
+  font-style: italic;
+}
 
+input[type="number"][data-empty="true"] {
+  color: #aaa !important;
+  font-style: italic;
+}
+	  
 select {
   padding: 6px 8px;
   border: 1px solid #ccc;
@@ -918,6 +928,25 @@ border-radius: 12px;
   </div>
 
   <script>
+  // Обработка пустых числовых полей и placeholder
+  document.querySelectorAll('input[type="number"]').forEach(input => {
+    // Серый placeholder
+    input.setAttribute("placeholder", "0");
+
+    // Если значение 0 при загрузке — делаем поле визуально пустым
+    if (input.value === "0") input.value = "";
+
+    // При фокусе — если поле было 0, очищаем его
+    input.addEventListener("focus", () => {
+      if (input.value === "0") input.value = "";
+    });
+
+    // При уходе из поля — если пусто, вернуть 0
+    input.addEventListener("blur", () => {
+      if (input.value === "") input.value = "0";
+    });
+  });
+	  
     function toggleExpert() {
       const block = document.getElementById('block-expert');
       const toggle = document.querySelector('.expert-toggle');
