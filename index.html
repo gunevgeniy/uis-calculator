@@ -1160,14 +1160,15 @@ AR: {
   cost: () => getCheckbox("AR") ? 2000 : 0
 },
 KolvoSaitov: {
-  limit: () => {
-    const val = getNumber("KolvoSaitov");
-    if (val < 2) return 0;
-    if (val < 6) return 0;
-    if (val < 21) return 0;
-    if (val < 1501) return 0;
-    return "уменьшите до 1500";
-  }
+	limit: () => getNumber("KolvoSaitov") ? "безлимит" : 0
+//  limit: () => {
+//    const val = getNumber("KolvoSaitov");
+//    if (val < 2) return 0;
+//    if (val < 6) return 0;
+//    if (val < 21) return 0;
+//    if (val < 1501) return 0;
+//    return "уменьшите до 1500";
+//  }
 },
 KolvoPolzovatelskihIstochnikov: {
   limit: () => {
