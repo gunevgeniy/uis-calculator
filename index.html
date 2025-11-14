@@ -1163,9 +1163,9 @@ KolvoSaitov: {
   limit: () => {
     const val = getNumber("KolvoSaitov");
     if (val < 2) return 0;
-    if (val < 6) return (val - 1) * 500;
-    if (val < 21) return 7000;
-    if (val < 1501) return 12000;
+    if (val < 6) return 0;
+    if (val < 21) return 0;
+    if (val < 1501) return 0;
     return "уменьшите до 1500";
   }
 },
