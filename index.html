@@ -2,1921 +2,2974 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Калькулятор стоимости сервиса UIS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="yandex" content="noindex, nofollow">
+  <title>Калькулятор стоимости сервиса</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
   <style>
-    /* Базовая стилизация */
-.input-wrapper {
-  display: flex;
-  justify-content: center;
-}
-
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #eef5ff;
-      margin: 0;
-      padding: 0;
-      color: #222;
-    }
-.cost-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  margin: 20px 0;
-}
-.spacer {
-  width: 100px; /* такой же ширины, как и кнопка */
-}
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px 15px;
+    :root {
+      --color-primary: #0000aa;
+      --color-primary-light: rgba(0, 0, 170, 0.08);
+      --color-bg: #F0F2F5;
+      --color-card-bg: #FFFFFF;
+      --color-input-bg: #FFFFFF;
+      --color-input-border: #C4C4C4;
+      --color-text-main: #252525;
+      --color-text-secondary: #878787;
+      --color-limit: #e67e22; 
+      --radius-card: 20px;
+      --radius-input: 10px;
+      --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+      --font-head: 'Manrope', sans-serif;
+      --font-body: 'Inter', sans-serif;
     }
 
-    h2 {
-      text-align: center;
-      font-size: 20px;
-      color: #005bb5;
-      margin-top: 25px;
-      margin-bottom: 20px;
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: var(--font-body); background-color: var(--color-bg); color: var(--color-text-main); margin: 0; padding: 0; overflow-x: hidden; }
+
+    .bg-cloud {
+      position: fixed; top: -10%; left: -10%; width: 70vw; height: 70vw;
+      background: radial-gradient(circle, rgba(0,0,170,0.12) 0%, rgba(255,255,255,0) 70%);
+      filter: blur(80px); z-index: -1; pointer-events: none;
     }
 
-    .calc-block {
-      background: #fff5cc;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-      padding: 20px;
-      transition: all 0.3s ease;
+    .layout-wrapper {
+      max-width: 1200px; margin: 0 auto; padding: 40px 20px 140px 20px;
+      display: grid; grid-template-columns: 1fr 340px; gap: 30px; align-items: start;
     }
+    .main-column { display: flex; flex-direction: column; gap: 24px; }
+    .sidebar-column { position: sticky; top: 24px; z-index: 10; }
 
-    .calc-row {
-      display: grid;
-      grid-template-columns: 28% 26% 23% 23%;
-      gap: 10px;
+    .card {
+      background: var(--color-card-bg); border-radius: var(--radius-card);
+      padding: 24px; box-shadow: var(--shadow-card);
+    }
+    .card-group { position: relative; } 
+
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 15px; cursor: pointer;
+    }
+    .card-header.static { cursor: default; margin-bottom: 20px;} 
+
+    .card-title { font-size: 18px; font-weight: 700; font-family: var(--font-head); color: var(--color-primary); display: flex; align-items: center; gap: 10px;}
+
+    .header-toggle-icon {
+        width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+        border-top: 8px solid var(--color-primary); transition: transform 0.3s;
+    }
+    .card-header.collapsed .header-toggle-icon { transform: rotate(-90deg); }
+
+    .option-row {
+      display: grid; 
+      grid-template-columns: 1fr 150px; 
+      gap: 15px; 
+      padding: 16px 0; 
+      border-bottom: 1px solid #eef2f6;
       align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
+    }
+    .option-row:last-child { border-bottom: none; }
+    
+    .option-row.stacked {
+        grid-template-columns: 1fr;
+        gap: 6px; 
+        align-items: start;
+    }
+    .option-row.stacked .control-wrapper {
+        width: 100%;
+        justify-content: flex-start;
     }
 
-    .calc-row-header {
-      font-weight: bold;
-      text-align: center;
-      border-bottom: 2px solid #ccc;
-    }
+    .option-info { display: flex; flex-direction: column; gap: 6px; }
+    
+    .option-name { font-weight: 600; font-size: 15px; line-height: 1.4; display: block; }
+    .option-meta { font-size: 12px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-height: 24px; justify-content: center; }
 
-    .calc-row .label {
-      text-align: left;
-      font-weight: 500;
-      position: relative;
+    .price-badge {
+      display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; 
+      font-weight: 600; font-size: 11px; white-space: nowrap; line-height: 1.4;
     }
+    .price-badge.cost { background: #E6F0FF; color: var(--color-primary); }
+    .price-badge.limit { background: #FFF4E6; color: var(--color-limit); }
 
     .info-icon {
-      display: inline-block;
-      margin-left: 6px;
-      font-weight: bold;
-      color: #005bb5;
-      cursor: pointer;
-      font-style: normal;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px;
+      background: var(--color-primary-light); color: var(--color-primary);
+      border-radius: 50%; font-size: 11px; font-weight: 800; font-family: serif; cursor: pointer;
+      vertical-align: middle; margin-left: 4px; margin-bottom: 2px;
     }
 
-    .tooltip {
-      display: none;
-      position: absolute;
-      left: 20px;
-      top: 100%;
-      z-index: 999;
-      background: #ffffff;
-      color: #333;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      padding: 10px;
-      max-width: 300px;
-	    width: max-content;
-      white-space: normal;
-      font-size: 13px;
-      text-align: left;
-  transition: opacity 0.3s ease;
-  opacity: 0;
-  visibility: hidden;
+    .control-wrapper { display: flex; justify-content: flex-end; align-items: center; }
+
+    .toggle-switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #D1D1D1; transition: .3s; border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
+      background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    input:checked + .slider { background-color: var(--color-primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .stepper {
+      display: flex; align-items: center; 
+      background: var(--color-input-bg);
+      border: 1px solid var(--color-input-border);
+      border-radius: var(--radius-input); 
+      padding: 3px; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+    .stepper-btn {
+      width: 30px; height: 30px; border: none; background: #F0F4FF;
+      border-radius: 8px; color: var(--color-primary); font-weight: 700;
+      font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .stepper-btn:active { background: #dce6ff; }
+    .stepper-input {
+      width: 50px; border: none; background: transparent; text-align: center;
+      font-family: var(--font-body); font-weight: 600; font-size: 15px;
+      color: var(--color-text-main); padding: 0; -moz-appearance: textfield; outline: none;
+    }
+    .stepper-input::selection { background: var(--color-primary-light); }
+
+    .custom-select-trigger {
+        width: 100%;
+        background: var(--color-input-bg);
+        border: 1px solid var(--color-input-border);
+        padding: 10px 12px;
+        border-radius: var(--radius-input);
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--color-text-main);
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        transition: border 0.2s;
+        min-height: 42px;
+    }
+    .custom-select-trigger:hover { border-color: var(--color-primary); }
+    .custom-select-trigger::after { content: "▼"; font-size: 10px; opacity: 0.6; margin-left: 8px; }
+    .hidden-native-select { display: none; }
+
+    .readonly-field {
+        background: #EAEAEA; padding: 8px 16px; border-radius: var(--radius-input);
+        font-weight: 700; color: #555; display: flex; align-items: center; gap: 6px;
+        border: 1px solid #ccc;
     }
 
-    .info-icon:hover + .tooltip {
+    .fmc-container {
+      border: 1px solid #D0D0D0; border-radius: 16px; padding: 20px;
+      margin-top: 10px; background: #FFFFFF; position: relative;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .fmc-title {
+        font-size: 12px; font-weight: 800; text-transform: uppercase;
+        color: var(--color-primary); margin-bottom: 12px; letter-spacing: 0.8px;
+    }
+    
+    .fmc-subgroup { display: flex; flex-direction: column; }
+    .fmc-subgroup .option-row { border-bottom: none; padding: 8px 0; }
+    .fmc-cost-row { padding-top: 10px; border-top: 1px dashed #e0e0e0; margin-top: 5px; display: flex; justify-content: flex-start; }
+
+    .summary-card {
+      background: var(--color-primary); color: #fff; padding: 24px;
+      border-radius: var(--radius-card); box-shadow: 0 10px 40px rgba(0, 0, 170, 0.25);
+    }
+    .summary-total { text-align: center; margin-bottom: 24px; }
+    .summary-total-label { font-size: 14px; opacity: 0.8; margin-bottom: 8px; }
+    .summary-total-value { font-size: 32px; font-family: var(--font-head); font-weight: 800; line-height: 1; }
+    .summary-currency { font-size: 20px; font-weight: 500; }
+    .summary-details { margin-bottom: 24px; }
+    .summary-row {
+      display: flex; justify-content: space-between; margin-bottom: 14px;
+      font-size: 14px; opacity: 0.95; padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+    .summary-row:last-child { border: none; }
+    .summary-row span:last-child { font-weight: 700; white-space: nowrap;}
+    
+    .button-group { display: flex; gap: 10px; }
+    .btn-reset { flex: 1; padding: 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.3s; }
+    .btn-reset:hover { background: rgba(255,255,255,0.25); }
+    .btn-print { flex: 1; padding: 14px; background: #fff; border: none; color: var(--color-primary); border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 14px; transition: transform 0.2s; }
+    .btn-print:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+    .expert-toggle-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        background: #FFFFFF; border: 1px solid #D0D0D0;
+        color: var(--color-primary); font-weight: 700;
+        cursor: pointer; 
+        font-size: 14px; margin-top: 20px; transition: all 0.2s;
+        padding: 12px 24px; border-radius: 30px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .expert-toggle-btn:hover { background: #F8F9FC; border-color: var(--color-primary); }
+    .expert-toggle-btn .toggle-icon {
+        width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent;
+        border-top: 6px solid var(--color-primary); transition: transform 0.3s;
+    }
+    .expert-toggle-btn.active .toggle-icon { transform: rotate(180deg); }
+    
+    .expert-block { display: none; margin-top: 20px; padding-top: 10px; border-top: 1px dashed #e0e0e0; }
+
+    .bottom-sheet { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; z-index: 500; box-shadow: 0 -5px 30px rgba(0,0,0,0.15); border-radius: 24px 24px 0 0; flex-direction: column; transition: transform 0.3s ease; }
+    .sheet-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--color-primary); color: white; border-radius: 24px 24px 0 0; cursor: pointer; }
+    .sheet-main-info { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .sheet-label { font-size: 14px; opacity: 0.9; font-weight: 500; }
+    .sheet-price { font-family: var(--font-head); font-weight: 800; font-size: 20px; white-space: nowrap; margin-left: 10px;}
+    .sheet-icon { transition: transform 0.3s; font-size: 12px; opacity: 0.7; margin-left: 10px; }
+    .sheet-content { padding: 24px; display: none; background: #fff; max-height: 60vh; overflow-y: auto; }
+    .sheet-content.open { display: block; }
+    .sheet-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #333; align-items: center; }
+    .sheet-reset { margin-top: 20px; width: 100%; padding: 14px; background: #F0F0F0; color: #333; border: none; border-radius: 12px; font-weight: 700; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.2s; }
+    .modal-overlay.open { display: flex; opacity: 1; }
+    .modal-content { background: #fff; padding: 25px; border-radius: 24px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); position: relative; max-height: 80vh; overflow-y: auto; }
+    .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #aaa; z-index: 5; }
+    .modal-text { font-size: 14px; line-height: 1.6; color: #444; }
+    .modal-options-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .modal-option-item { padding: 12px 16px; background: #F5F7FA; border-radius: 12px; cursor: pointer; font-weight: 500; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center; }
+    .modal-option-item:hover { background: #E6F0FF; color: var(--color-primary); }
+    .modal-option-item.selected { background: var(--color-primary); color: white; }
+    .modal-title { font-family: var(--font-head); font-weight: 700; font-size: 18px; margin-bottom: 15px; display: block; }
+
+    .manager-form { display: flex; flex-direction: column; gap: 15px; }
+    .form-group label { font-size: 13px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 5px; display: block; }
+    .form-group input { width: 100%; padding: 12px; border: 1px solid #D0D0D0; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; }
+    .form-group input:focus { border-color: var(--color-primary); }
+    .form-group input.invalid { border-color: #ff4d4f; background: #fff1f0; }
+    .btn-manager-print { width: 100%; padding: 14px; background: var(--color-primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 16px; margin-top: 10px; transition: all 0.2s; }
+    .btn-manager-print:hover { background: #000088; }
+    .btn-manager-print:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ========================================= */
+    /* NEW BEAUTIFUL TOAST (MODAL STYLE) */
+    /* ========================================= */
+    #mobile-toast {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6); /* Темный фон */
+        backdrop-filter: blur(4px);   /* Размытие фона */
+        z-index: 99999;
+        align-items: flex-end; /* По умолчанию снизу, для анимации */
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    #mobile-toast.visible {
+        display: flex;
+        opacity: 1;
+    }
+
+    .toast-card {
+        background: #fff;
+        color: #1f1f1f;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 24px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        margin-bottom: 40px; /* Отступ снизу */
+        transform: translateY(20px);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    #mobile-toast.visible .toast-card {
+        transform: translateY(0);
+    }
+
+    .toast-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
         display: block;
-  opacity: 1;
-  visibility: visible;
+    }
+    
+    #toast-title {
+        font-family: var(--font-head);
+        font-size: 20px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        color: #000;
+    }
+    
+    #toast-message {
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.5;
+        color: #555;
+        margin-bottom: 24px;
+    }
+    
+    .toast-btn {
+        background: var(--color-primary);
+        color: #fff;
+        border: none;
+        width: 100%;
+        padding: 14px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 16px;
+        cursor: pointer;
+        transition: transform 0.1s;
+    }
+    .toast-btn:active { transform: scale(0.98); }
+
+    /* Types colors */
+    .toast-type-success .toast-icon { color: #2ecc71; }
+    .toast-type-error .toast-icon { color: #e74c3c; }
+    .toast-type-loading .toast-icon { animation: spin 2s infinite linear; }
+    
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* PRINT STYLES */
+    @page {
+        size: A4;
+        margin: 0.8cm;
     }
 
-    .input-wrapper {
-  display: flex;
-  justify-content: center;
-}
+    #print-area { display: none; }
 
-input[type="number"] {
-  width: 80px;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  text-align: center;
-  font-size: 14px;
-  box-sizing: border-box;
-}
-
-	  
-select {
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  margin-left:25px;
-  margin-right:25px;
-  font-size: 14px;
-  text-align: center;
-	text-align-last: center; 
-}
-
-
-
-    select, input[type="checkbox"] {
-      width: 100%;
+    @media print {
+        body { background: white; color: black; font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .layout-wrapper, .bg-cloud, .bottom-sheet, .modal-overlay, .expert-toggle-btn, #mobile-toast { display: none !important; }
+        #print-area { display: flex !important; flex-direction: column; padding: 0; min-height: 100vh; }
     }
 
-    .result-block {
-      background: #d7e7ff;
-      border: 2px solid #005bb5;
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 15px;
+    .pdf-mode {
+        overflow: visible !important;
+        height: auto !important;
+    }
+    .pdf-mode body { background: white; color: black; overflow: visible !important; }
+    .pdf-mode .layout-wrapper, 
+    .pdf-mode .bg-cloud, 
+    .pdf-mode .bottom-sheet, 
+    .pdf-mode .modal-overlay, 
+    .pdf-mode .expert-toggle-btn, 
+    .pdf-mode #mobile-toast { display: none !important; }
+    
+    .pdf-mode #print-area { 
+        display: block !important; 
+        position: relative !important; 
+        top: auto;
+        left: auto;
+        width: 750px !important; 
+        max-width: 750px !important;
+        margin: 0 !important;
+        padding: 20px 30px 20px 20px !important; 
+        box-sizing: border-box !important;
+        min-height: 100vh;
+        z-index: 99999;
+        background: white;
     }
 
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #eee;
+    .print-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 3px solid var(--color-primary); padding-bottom: 20px; }
+    .print-logo { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 32px; color: var(--color-primary); }
+    .print-title { font-size: 18px; font-weight: 700; text-transform: uppercase; color: #333; }
+    
+    .print-manager { margin-bottom: 30px; padding: 15px; background: #F8F9FC; border-radius: 12px; border: 1px solid #eee; }
+    .print-manager h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--color-primary); text-transform: uppercase; }
+    .print-manager p { margin: 4px 0; font-size: 14px; color: #333; }
+
+    .print-section { 
+        margin-bottom: 20px; 
+        page-break-inside: auto; 
+        break-inside: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 16px;
+        padding: 15px 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        background: #fff;
+        position: relative;
+    }
+    
+    .print-section-title { 
+        display: block; /* Было none, но в JS мы удаляем display:none при печати, тут зададим явно */
+        font-weight: 700; 
+        font-size: 14px; 
+        color: var(--color-primary); 
+        text-transform: uppercase; 
+        margin-bottom: 15px; 
+        border-bottom: 2px solid #eee; 
+        padding-bottom: 8px;
+        
+        /* ГЛАВНОЕ: Клеим заголовок к следующему элементу (таблице) */
+        page-break-after: avoid; 
+        break-after: avoid; 
+    }
+    
+
+    .print-table { width: 100%; border-collapse: collapse; }
+    .print-table td { padding: 10px 5px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    
+    .print-table tr { 
+        page-break-inside: avoid; 
+        break-inside: avoid; 
+    }
+    .print-table tr:last-child td { border-bottom: none; }
+    
+    .print-row-name { font-weight: 700; font-size: 14px; color: #000; margin-bottom: 2px; }
+    .print-row-desc { font-size: 10px; color: #777; line-height: 1.1; white-space: normal; margin-top: 4px; }
+    .print-row-desc p { margin: 0; }
+    .print-row-value { font-weight: 600; font-size: 13px; text-align: right; white-space: nowrap; }
+    
+    .print-totals { 
+        background: #F0F2F5; 
+        border-radius: 16px; 
+        padding: 25px; 
+        margin-top: 30px; 
+        margin-bottom: 30px;
+        page-break-inside: avoid; 
+        break-inside: avoid;
+    }
+    .print-total-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
+    .print-total-row.main { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #ccc; align-items: center; }
+    .print-total-row.main .label { font-size: 18px; font-weight: 800; color: var(--color-primary); text-transform: uppercase; }
+    .print-total-row.main .value { font-size: 28px; font-weight: 800; color: var(--color-primary); }
+    .print-total-helper { display: block; font-size: 9px; color: #777; margin-top: 2px; line-height: 1.4; max-width: 300px; white-space: pre-wrap; }
+
+    .print-social { 
+        margin-top: auto; 
+        padding-top: 20px; 
+        border-top: 2px solid #eee; 
+        page-break-inside: avoid; 
+        break-inside: avoid;
+    }
+    .print-social-title { display: none; }
+    
+    .print-social-list { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr 1fr; 
+        gap: 12px; 
+    }
+    .print-social-link { 
+        font-size: 11px; 
+        color: #777; 
+        text-decoration: none; 
+        display: flex; 
+        align-items: center;
+        justify-content: center;
+        background: #fcfcfc;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        transition: 0.2s;
+    }
+    .print-social-link span { 
+        font-weight: 700; 
+        color: #666; 
+        margin-right: 0;
     }
 
-    .btn-group {
-
-      gap: 10px;
-      align-items:right;
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+    @media (max-width: 900px) {
+      .layout-wrapper { grid-template-columns: 1fr; }
+      .sidebar-column { display: none; }
+      .bottom-sheet { display: flex; }
+      .option-row { grid-template-columns: 1fr 140px; gap: 10px; } 
+      .option-row.stacked { grid-template-columns: 1fr; }
+      .card { padding: 16px; }
     }
-
-    .btn {
-      background: linear-gradient(to bottom, #007bff, #005bb5);
-      color: white;
-      border: none;
-margin-left: auto;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.2s;
-border-radius: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0,91,181,0.2);
-    }
-
-    .btn:hover {
-      background: linear-gradient(to bottom, #005bb5, #007bff);
-      box-shadow: 0 0 5px rgba(0, 91, 181, 0.4);
-    }
-
-    .red-text {
-      color: #d02828;
-      font-weight: bold;
-    }
-
-    .expert-toggle {
-      color: #005bb5;
-      cursor: pointer;
-      margin-top: 10px;
-      display: inline-block;
-      font-weight: bold;
-    }
-
-    .expert-group {
-      display: none;
-      margin-top: 10px;
-    }
-
-    .expert-group.visible {
-      display: block;
-    }
-
-    /* Скрыть заголовки колонок */
-@media (max-width: 768px) {
-  .calc-row-header {
-    display: none !important;
-  }
-
-  .calc-row {
-    display: block;
-    border-bottom: 1px solid #eee;
-    padding: 15px 10px;
-  }
-
-  .calc-row .label {
-    font-weight: bold;
-    margin-bottom: 6px;
-    text-align: center;
-	  display: block;
-  width: 100%;
-  }
-
-  .calc-row .input-wrapper,
-  .calc-row select,
-  .calc-row input[type="number"],
-  .calc-row input[type="checkbox"] {
-    margin-bottom: 10px;
-    width: 100%;
-  }
-
-  .calc-row > div:not(.label):not(.input-wrapper) {
-    display: flex;
-    justify-content: space-between;
-    padding: 2px 0;
-    font-size: 14px;
-  }
-
-  .calc-row > div[id^="cost-"]:not(:empty)::before {
-    content: "Стоимость: ";
-    font-weight: 500;
-  }
-
-  .calc-row > div[id^="limit-"]:not(:empty)::before  {
-    content: "Расширение: ";
-    font-weight: 500;
-  }
-}
-#cost-TarifFMC,
-#limit-TarifFMC,
-#cost-RegionDostavki,
-#limit-RegionDostavki {
-  display: none !important;
-}
-
+    .tooltip-content-hidden { display: none; }
   </style>
+  <!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105781169', 'ym');
+
+    ym(105781169, 'init', {ssr:true, clickmap:true, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/105781169" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
 </head>
 <body>
-  <div class="container">
-    <!-- Первый блок опций -->
-    <h2>Настройки ВАТС и номеров</h2>
-    <div class="calc-block" id="block-vats" style="background: #d6eaff;">
-      <div class="calc-row calc-row-header">
-        <div>Опция</div>
-        <div>Выбор</div>
-        <div>Стоимость</div>
-        <div>Расширение</div>
+
+<!-- Новое красивое уведомление -->
+<div id="mobile-toast" onclick="closeToastBackdrop(event)">
+    <div class="toast-card">
+        <div class="toast-icon" id="toast-icon">⏳</div>
+        <div id="toast-title">Загрузка...</div>
+        <div id="toast-message">Пожалуйста, подождите.</div>
+        <button class="toast-btn" onclick="closeToast()">Понятно</button>
+    </div>
+</div>
+
+<div class="bg-cloud"></div>
+
+<div class="layout-wrapper">
+  
+  <!-- Left Column: Options -->
+  <div class="main-column">
+    
+    <!-- BLOCK 1: VATS -->
+    <section class="card card-group">
+      <div class="card-header static">
+        <div class="card-title">Виртуальная АТС и номера</div>
       </div>
-<!-- Здесь будут строки первой группы -->
-<div class="calc-row" data-id="VATS" align="center">
-  <div class="label"><strong>Виртуальная АТС</strong>
-    <span class="info-icon">i</span>
-    <div class="tooltip">
-      Базовый функционал сценариев: <br>
-      -инф. сообщение <br>
-      -меню <br>
-      -переадресация на сотрудника и группу <br>
-      -распределение по графикам <br>
-      -распределение на персонального менеджера из CRM <br><br>
-      Распределение звонков: <br>
-      -по приоритету <br>
-      -одновременно <br><br>
-      До 3 номеров у сотрудника <br>(сип/личный/FMC). <br>
-      Управление АОНами. <br>
-      Оценка разговора.
-    </div>
-  </div>
-  <div><input type="checkbox" id="VATS" onchange="runCascade('VATS')"></div>
 
-  <div id="cost-VATS">0</div>
-  <div id="limit-VATS"></div>
-</div>
-
-<div class="calc-row" align="center">
-  <div class="label">ВАТС Pro (максимум возможностей)
-    <span class="info-icon">i</span>
-    <div class="tooltip">
-      ВСЕ функции сценариев и распределения звонков: <br>
-      -на последнего менеджера <br>
-      -по спискам АОНов <br>
-      -по данным из CRM <br>
-      -по регионам/номеру/сегментам. и пр. <br>
-      -по процентам <br>
-      -уравнивание по кол-ву или длительности <br>
-      -не звонить ранее, чем через <br>
-      -колааут <br>
-      -коллбек <br><br>
-      Доп. функции: <br>
-      -управление АОНами <br>
-      -опции разговора <br>
-      -тренер <br><br>
-      - до 6 номеров у сотрудника <br>
-      - SIPURI - канальность 2
-    </div>
-  </div>
-  <div><input type="checkbox" id="VATSPRO" onchange="runCascade('VATSPRO')"></div>
-  <div id="cost-VATSPRO">0</div>
-  <div id="limit-VATSPRO"></div>
-</div>
-<div class="calc-row" align="center">
-  <div class="label">Кол-во сотрудников ВАТС</div>
-  <div class="input-wrapper"><input type="number" id="KolvoSotrudnikovVATS" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoSotrudnikovVATS')"></div>
-  <div id="cost-KolvoSotrudnikovVATS"></div>
-  <div id="limit-KolvoSotrudnikovVATS">0</div>
-</div>
-
-<div class="calc-row" align="center">
-  <div class="label">Длительность хранения записей ВАТС</div>
-  <div class="input-wrapper">
-    <select id="DlitelnostHraneniyaVATS" onchange="runCascade('DlitelnostHraneniyaVATS')">
-      <option value="0">0</option>
-      <option value="1 неделя">1 неделя</option>
-      <option value="1 месяц">1 месяц</option>
-      <option value="3 месяца">3 месяца</option>
-      <option value="6 месяцев">6 месяцев</option>
-      <option value="1 год">1 год</option>
-      <option value="2 года">2 года</option>
-      <option value="4 года">4 года</option>
-    </select>
-  </div>
-  <div id="cost-DlitelnostHraneniyaVATS"></div>
-  <div id="limit-DlitelnostHraneniyaVATS">0</div>
-</div>
-<div class="calc-row" data-id="NomeraVATS" align="center">
-  <div class="label">Кол-во номеров UIS - Городские/Мобильные</div>
-  <div class="input-wrapper">
-    <input type="number" id="NomeraVATS" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('NomeraVATS')">
-  </div>
-  <div id="cost-NomeraVATS">0</div>
-  <div id="limit-NomeraVATS"></div>
-</div>
-<div class="calc-row" data-id="NomeraVATS8800" align="center">
-  <div class="label">Кол-во номеров UIS - 8800
-    <span class="info-icon">i</span>
-    <div class="tooltip">700р. - мин. счет, расходуется на звонки</div>
-  </div>
-  <div class="input-wrapper">
-    <input type="number" id="NomeraVATS8800" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('NomeraVATS8800')">
-  </div>
-  <div id="cost-NomeraVATS8800">0</div>
-  <div id="limit-NomeraVATS8800"></div>
-</div>
-
-<div class="calc-row" data-id="KolvoSvoihNomerov" align="center">
-  <div class="label">Кол-во cторонних номеров
-    <span class="info-icon">i</span>
-    <div class="tooltip">
-      Подключение номера своего оператора, <br>
-      если предоставляет SIP-настройки (логин, пароль и хост)
-    </div>
-  </div>
-  <div class="input-wrapper">
-    <input type="number" id="KolvoSvoihNomerov" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoSvoihNomerov')">
-  </div>
-  <div id="cost-KolvoSvoihNomerov">0</div>
-  <div id="limit-KolvoSvoihNomerov"></div>
-</div>
-
-<div class="calc-row" data-id="KolvoFMC" align="center">
-  <div class="label">Кол-во сим карт
-    <span class="info-icon">i</span>
-    <div class="tooltip">Портация своих номеров - 0 руб. (только сим МСК и обл.)</div>
-  </div>
-  <div class="input-wrapper">
-    <input type="number" id="KolvoFMC" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoFMC')">
-  </div>
-  <div id="cost-KolvoFMC">0</div>
-  <div id="limit-KolvoFMC"></div>
-</div>
-
-<div class="calc-row" align="center">
-  <div class="label">Тариф FMC сим карт</div>
-  <div class="input-wrapper">
-    <select id="TarifFMC" onkeydown="handleEnter(event)" onchange="runCascade('TarifFMC')">
-      <option value="нет">нет</option>
-      <option value="200 минут, 1Гб интернета">200 минут, 1Гб интернета</option>
-      <option value="600 минут, 5Гб интернета">600 минут, 5Гб интернета</option>
-      <option value="800 минут, 10Гб интернета">800 минут, 10Гб интернета</option>
-      <option value="2000 минут, 20Гб интернета">2000 минут, 20Гб интернета</option>
-      <option value="15 минут, 0,2Гб интернета">15 минут, 0,2Гб интернета</option>
-    </select>
-  </div>
-  <div id="cost-TarifFMC"></div>
-  <div id="limit-TarifFMC"></div>
-</div>
-
-<div class="calc-row" align="center">
-  <div class="label">Регион доставки (разово за один адрес)</div>
-  <div class="input-wrapper">
-    <select id="RegionDostavki" onkeydown="handleEnter(event)" onchange="runCascade('RegionDostavki')">
-      <option value="нет">нет</option>
-      <option value="Москва и мск. обл.">Москва и мск. обл.</option>
-      <option value="Санкт-Петербург и лен. обл.">Санкт-Петербург и лен. обл.</option>
-      <option value="Центральная Россия, Поволжье">Центральная Россия, Поволжье</option>
-      <option value="Юг, Урал, Сибирь">Юг, Урал, Сибирь</option>
-      <option value="Дальний Восток">Дальний Восток</option>
-    </select>
-  </div>
-  <div id="cost-RegionDostavki"></div>
-  <div id="limit-RegionDostavki"></div>
-</div>
-
-<div class="calc-row" data-id="NomeraVATSVsego" align="center">
-  <div class="label">Кол-во номеров UIS всего</div>
-  <div class="input-wrapper">
-    <input type="number" id="NomeraVATSVsego" value="0" disabled>
-  </div>
-  <div id="cost-NomeraVATSVsego"></div>
-  <div id="limit-NomeraVATSVsego">0</div>
-</div>
-
-
-    </div>
-
-    <!-- Переключатель экспертных опций -->
-    <div class="expert-toggle" onclick="toggleExpert()" style="font-size: 14px">Дополнительные опции ВАТС (показать)</div>
-    <div class="calc-block expert-group" id="block-expert" style="background: #e6f2ff;">
-      <div class="calc-row calc-row-header">
-        <div>Опция</div>
-        <div>Выбор</div>
-        <div>Стоимость</div>
-        <div>Расширение</div>
+      <div class="option-row">
+        <div class="option-info">
+          <div class="option-name">
+            Тариф "ВАТС" 
+            <span class="info-icon" onclick="openTooltip('tooltip-vats')">i</span>
+          </div>
+          <div class="option-meta">
+            <span id="cost-VATS"></span>
+            <span id="limit-VATS"></span>
+          </div>
+        </div>
+        <div class="control-wrapper">
+          <label class="toggle-switch">
+            <input type="checkbox" id="VATS" onchange="runCascade('VATS')">
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
-<div class="calc-row" data-id="LiniyGrupovogoVizova" align="center">
-  <div class="label">Кол-во линий группового вызова</div>
-  <div class="input-wrapper">
-    <input type="number" id="LiniyGrupovogoVizova" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('LiniyGrupovogoVizova')">
-  </div>
-  <div id="cost-LiniyGrupovogoVizova"></div>
-  <div id="limit-LiniyGrupovogoVizova">0</div>
-</div>
 
-<div class="calc-row" data-id="LiniyIshodyashihZvonkov" align="center">
-  <div class="label">Кол-во линий исходящих звонков</div>
-  <div class="input-wrapper">
-    <input type="number" id="LiniyIshodyashihZvonkov" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('LiniyIshodyashihZvonkov')">
-  </div>
-  <div id="cost-LiniyIshodyashihZvonkov"></div>
-  <div id="limit-LiniyIshodyashihZvonkov">0</div>
-</div>
-<div class="calc-row" data-id="KolvoSIPTrankov" align="center">
-  <div class="label">Кол-во SIP-транков</div>
-  <div class="input-wrapper">
-    <input type="number" id="KolvoSIPTrankov" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoSIPTrankov')">
-  </div>
-  <div id="cost-KolvoSIPTrankov">0</div>
-  <div id="limit-KolvoSIPTrankov"></div>
-</div>
-
-<div class="calc-row" data-id="KanalnostSIPTrankov" align="center">
-  <div class="label">Канальность SIP-транков</div>
-  <div class="input-wrapper">
-    <select id="KanalnostSIPTrankov" onkeydown="handleEnter(event)" onchange="runCascade('KanalnostSIPTrankov')">
-      <option value="0">0</option>
-      <option value="30">30</option>
-      <option value="60">60</option>
-      <option value="90">90</option>
-      <option value="180">180</option>
-    </select>
-  </div>
-  <div id="cost-KanalnostSIPTrankov"></div>
-  <div id="limit-KanalnostSIPTrankov">0</div>
-</div>
-<div class="calc-row" data-id="KolvoSIPURI" align="center">
-  <div class="label">Кол-во SIPURI</div>
-  <div class="input-wrapper">
-    <input type="number" id="KolvoSIPURI" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoSIPURI')">
-  </div>
-  <div id="cost-KolvoSIPURI">0</div>
-  <div id="limit-KolvoSIPURI"></div>
-</div>
-
-<div class="calc-row" data-id="KolvoSIPAkkauntov" align="center">
-  <div class="label">Кол-во SIP-аккаунтов</div>
-  <div class="input-wrapper">
-    <input type="number" id="KolvoSIPAkkauntov" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoSIPAkkauntov')">
-  </div>
-  <div id="cost-KolvoSIPAkkauntov">0</div>
-  <div id="limit-KolvoSIPAkkauntov"></div>
-</div>
-<div class="calc-row" data-id="KanalnostSIPAkkauntov" align="center">
-  <div class="label">Канальность SIP-аккаунтов</div>
-  <div class="input-wrapper">
-    <select id="KanalnostSIPAkkauntov" onkeydown="handleEnter(event)" onchange="runCascade('KanalnostSIPAkkauntov')">
-      <option value="0">0</option>
-      <option value="30">30</option>
-      <option value="60">60</option>
-      <option value="90">90</option>
-      <option value="180">180</option>
-    </select>
-  </div>
-  <div id="cost-KanalnostSIPAkkauntov"></div>
-  <div id="limit-KanalnostSIPAkkauntov">0</div>
-</div>
-
-
-
-    </div>
-
-    <!-- Второй блок -->
-    <h2>ОМНИ Чаты</h2>
-    <div class="calc-block" id="block-omni" style="background: #e2f4e6;">
-      <div class="calc-row calc-row-header">
-        <div>Опция</div>
-        <div>Выбор</div>
-        <div>Стоимость</div>
-        <div>Расширение</div>
+      <div class="option-row">
+        <div class="option-info">
+            <div class="option-name">
+                Опция "ВАТС Pro" 
+                <span class="info-icon" onclick="openTooltip('tooltip-vatspro')">i</span>
+            </div>
+            <div class="option-meta">
+                <span id="cost-VATSPRO"></span>
+                <span id="limit-VATSPRO"></span>
+            </div>
+        </div>
+        <div class="control-wrapper">
+            <label class="toggle-switch">
+                <input type="checkbox" id="VATSPRO" onchange="runCascade('VATSPRO')">
+                <span class="slider"></span>
+            </label>
+        </div>
       </div>
-<div class="calc-row" data-id="OMNI" align="center">
-  <div class="label"><strong>ОМНИ Чаты</strong></div>
-  <div class="input-wrapper">
-    <input type="checkbox" id="OMNI" onchange="runCascade('OMNI')">
-  </div>
-  <div id="cost-OMNI">0</div>
-  <div id="limit-OMNI"></div>
-</div>
 
-<div class="calc-row" data-id="KolvoSotrudnikovOMNI" align="center">
-  <div class="label">Кол-во сотрудников ОМНИ Чаты</div>
-  <div class="input-wrapper">
-    <input type="number" id="KolvoSotrudnikovOMNI" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoSotrudnikovOMNI')">
-  </div>
-  <div id="cost-KolvoSotrudnikovOMNI"></div>
-  <div id="limit-KolvoSotrudnikovOMNI">0</div>
-</div>
-
-<div class="calc-row" data-id="KolvoWA" align="center">
-  <div class="label">Кол-во WhatsApp аккаунтов</div>
-  <div class="input-wrapper">
-    <input type="number" id="KolvoWA" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoWA')">
-  </div>
-  <div id="cost-KolvoWA"></div>
-  <div id="limit-KolvoWA">0</div>
-</div>
-
-<div class="calc-row" data-id="KolvoWABA" align="center">
-  <div class="label">Кол-во каналов WABA
- <span class="info-icon">i</span>
-    <div class="tooltip">
-      Cтоимость диалогов <br>
-      - маркетинговые шаблоны: 9,2р. <br>
-      - авторизационные шаблоны: 5,52р. <br>
-      - пользовательские шаблоны: 4,94р. <br>
-      - сервисные шаблоны: 4,6р. <br>
-    </div>
- </div>
-  <div class="input-wrapper">
-    <input type="number" id="KolvoWABA" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoWABA')">
-  </div>
-  <div id="cost-KolvoWABA">0</div>
-  <div id="limit-KolvoWABA">0</div>
-</div>
-
-<div class="calc-row" data-id="TgVkAvito" align="center">
-  <div class="label">Telegram, Tg Bot, VK Groups, Авито, Циан, AutoRU, E-mail, СМС, Viber, WEB-чат</div>
-  <div class="input-wrapper">
-    <input type="checkbox" id="TgVkAvito" onchange="runCascade('TgVkAvito')">
-  </div>
-  <div id="cost-TgVkAvito">0</div>
-  <div id="limit-TgVkAvito"></div>
-</div>
-
-<div class="calc-row" data-id="OMNIKnopka" align="center">
-  <div class="label">ОМНИ виджет на сайт
-    <span class="info-icon">i</span>
-    <div class="tooltip">
-      Виджет, форма, кнопка с мессенджерами <br>
-      Оформление гибко настраивается
-    </div>
-  </div>
-  <div class="input-wrapper">
-    <input type="checkbox" id="OMNIKnopka" onchange="runCascade('OMNIKnopka')">
-  </div>
-  <div id="cost-OMNIKnopka">0</div>
-  <div id="limit-OMNIKnopka"></div>
-</div>
-
-    </div>
-
-    <!-- Третий блок -->
-    <h2>Аналитика рекламы <span id="toggle-analytics" style="cursor:pointer; color:#007BFF; margin-left: 8px; font-size:20px">(показать)</span></h2>
-    <div class="calc-block" id="block-ar" style="display:none; background: #fff0e5;">
-      <div class="calc-row calc-row-header">
-        <div>Опция</div>
-        <div>Выбор</div>
-        <div>Стоимость</div>
-        <div>Расширение</div>
+      <div class="option-row">
+        <div class="option-info">
+            <div class="option-name">Лицензии сотрудников </div>
+            <div class="option-meta">
+                <span id="cost-KolvoSotrudnikovVATS"></span>
+                <span id="limit-KolvoSotrudnikovVATS"></span>
+            </div>
+        </div>
+        <div class="control-wrapper">
+            <div class="stepper">
+                <button class="stepper-btn" onclick="stepInput('KolvoSotrudnikovVATS', -1)">−</button>
+                <input type="text" inputmode="numeric" class="stepper-input" id="KolvoSotrudnikovVATS" value="0" onchange="runCascade('KolvoSotrudnikovVATS')">
+                <button class="stepper-btn" onclick="stepInput('KolvoSotrudnikovVATS', 1)">+</button>
+            </div>
+        </div>
       </div>
-<div class="calc-row" data-id="AR" align="center">
-  <div class="label"><strong>Аналитика рекламы</strong>
-    <span class="info-icon">i</span>
-    <div class="tooltip">
-      - Веб аналитика - фиксируем трафик на сайте, распределяем по источникам <br>
-      - Запись звонков, прослушка, тегирование <br>
-      - Забираем заявки с сайта (JS API) <br>
-      - Интеграция с Марквиз и Тильда <br>
-      - Интеграция с рекламными системами и с метрикой <br>
-      - Шаблонные отчеты (сводные) без возможности редактирования <br>
-      - Сырые данные (отчеты) <br>
-      - Настройка целей
-    </div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="AR" onchange="runCascade('AR')"></div>
-  <div id="cost-AR">0</div>
-  <div id="limit-AR"></div>
-</div>
 
-<div class="calc-row" data-id="KolvoSaitov" align="center">
-  <div class="label">Кол-во сайтов</div>
-  <div class="input-wrapper"><input type="number" id="KolvoSaitov" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('KolvoSaitov')"></div>
-  <div id="cost-KolvoSaitov"></div>
-  <div id="limit-KolvoSaitov">0</div>
-</div>
-
-<div class="calc-row" data-id="KolvoPolzovatelskihIstochnikov" align="center">
-  <div class="label">Кол-во пользовательских источников</div>
-  <div class="input-wrapper">
-    <select id="KolvoPolzovatelskihIstochnikov" onkeydown="handleEnter(event)" onchange="runCascade('KolvoPolzovatelskihIstochnikov')">
-      <option value="0">0</option>
-      <option value="50">50</option>
-      <option value="250">250</option>
-      <option value="500">500</option>
-      <option value="5000">5000</option>
-    </select>
-  </div>
-  <div id="cost-KolvoPolzovatelskihIstochnikov"></div>
-  <div id="limit-KolvoPolzovatelskihIstochnikov">0</div>
-</div>
-
-<div class="calc-row" data-id="PaketTrafika" align="center">
-  <div class="label">Пакет трафика
-    <span class="info-icon">i</span>
-    <div class="tooltip">0,2р/посетитель без и сверх пакета</div>
-  </div>
-  <div class="input-wrapper">
-    <select id="PaketTrafika" onkeydown="handleEnter(event)" onchange="runCascade('PaketTrafika')">
-      <option value="0">0</option>
-      <option value="10000">10000</option>
-      <option value="20000">20000</option>
-      <option value="50000">50000</option>
-      <option value="100000">100000</option>
-      <option value="200000">200000</option>
-      <option value="500000">500000</option>
-      <option value="безлимит">безлимит</option>
-    </select>
-  </div>
-  <div id="cost-PaketTrafika"></div>
-  <div id="limit-PaketTrafika">0</div>
-</div>
-
-<div class="calc-row" data-id="KT" align="center">
-  <div class="label">Коллтрекинг
-    <span class="info-icon">i</span>
-    <div class="tooltip">
-      - Статический КТ <br>
-      - Динамический КТ + резервные <br>
-      - Мониторинг КТ и т.д.
-    </div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="KT" onchange="runCascade('KT')"></div>
-  <div id="cost-KT">0</div>
-  <div id="limit-KT"></div>
-</div>
-
-<div class="calc-row" data-id="NomeraKT" align="center">
-  <div class="label">Кол-во номеров КТ - Городские/Мобильные</div>
-  <div class="input-wrapper"><input type="number" id="NomeraKT" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('NomeraKT')"></div>
-  <div id="cost-NomeraKT">0</div>
-  <div id="limit-NomeraKT"></div>
-</div>
-
-<div class="calc-row" data-id="NomeraKT8800" align="center">
-  <div class="label">Кол-во номеров КТ - 8800
-    <span class="info-icon">i</span>
-    <div class="tooltip">700р. - мин. счет, расходуется на звонки</div>
-  </div>
-  <div class="input-wrapper"><input type="number" id="NomeraKT8800" min="0" value="0" onkeydown="handleEnter(event)" onchange="runCascade('NomeraKT8800')"></div>
-  <div id="cost-NomeraKT8800">0</div>
-  <div id="limit-NomeraKT8800"></div>
-</div>
-
-<div class="calc-row" align="center">
-  <div class="label">Длительность хранения записей КТ</div>
-  <div class="input-wrapper">
-    <select id="DlitelnostHraneniyaAR" onkeydown="handleEnter(event)" onchange="runCascade('DlitelnostHraneniyaAR')">
-      <option value="0">0</option>
-      <option value="1 неделя">1 неделя</option>
-      <option value="1 месяц">1 месяц</option>
-      <option value="3 месяца">3 месяца</option>
-      <option value="6 месяцев">6 месяцев</option>
-      <option value="1 год">1 год</option>
-      <option value="2 года">2 года</option>
-      <option value="4 года">4 года</option>
-    </select>
-  </div>
-  <div id="cost-DlitelnostHraneniyaAR"></div>
-  <div id="limit-DlitelnostHraneniyaAR">0</div>
-</div>
-
-<div class="calc-row" data-id="EmailTreking" align="center">
-  <div class="label">Email-трекинг (кол-во писем в месяц)
-    <span class="info-icon">i</span>
-    <div class="tooltip">Статический и динамический</div>
-  </div>
-  <div class="input-wrapper">
-    <select id="EmailTreking" onkeydown="handleEnter(event)" onchange="runCascade('EmailTreking')">
-      <option value="нет">нет</option>
-      <option value="до 100 шт.">до 100 шт.</option>
-      <option value="больше 100 шт.">больше 100 шт.</option>
-    </select>
-  </div>
-  <div id="cost-EmailTreking">0</div>
-  <div id="limit-EmailTreking">0</div>
-</div>
-
-<div class="calc-row" data-id="KonstruktorOtchetov" align="center">
-  <div class="label">Конструктор отчетов
-    <span class="info-icon">i</span>
-    <div class="tooltip">
-      - создание своих отчетов (сводные, дашборды, сырые данные) <br>
-      - создание своих столбцов и вложенности <br>
-      - использование атрибуции (вся мультиканальная аналитика) <br><br>
-      Без опции доступны шаблонные отчеты, в которых нельзя ничего менять
-    </div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="KonstruktorOtchetov" onchange="runCascade('KonstruktorOtchetov')"></div>
-  <div id="cost-KonstruktorOtchetov">0</div>
-  <div id="limit-KonstruktorOtchetov"></div>
-</div>
-
-<div class="calc-row" data-id="AnalitikaProdaj" align="center">
-  <div class="label">Аналитика продаж из CRM
-    <span class="info-icon">i</span>
-    <div class="tooltip">Загрузка сделок из CRM в UIS</div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="AnalitikaProdaj" onchange="runCascade('AnalitikaProdaj')"></div>
-  <div id="cost-AnalitikaProdaj">0</div>
-  <div id="limit-AnalitikaProdaj"></div>
-</div>
-
-<div class="calc-row" data-id="IntegraciyaSVidjetami" align="center">
-  <div class="label">Интеграция с виджетами
-    <span class="info-icon">i</span>
-    <div class="tooltip">Интеграция аналитики рекламы с виджетами клиента</div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="IntegraciyaSVidjetami" onchange="runCascade('IntegraciyaSVidjetami')"></div>
-  <div id="cost-IntegraciyaSVidjetami">0</div>
-  <div id="limit-IntegraciyaSVidjetami"></div>
-</div>
-
-    </div>
-
-    <!-- Четвёртый блок -->
-    <h2>Интеграции и доп. опции</h2>
-    <div class="calc-block" id="block-integration" style="background: #f2ebff;">
-      <div class="calc-row calc-row-header">
-        <div>Опция</div>
-        <div>Выбор</div>
-        <div>Стоимость</div>
-        <div>Расширение</div>
+      <div class="option-row">
+        <div class="option-info">
+            <div class="option-name">Хранение разговоров</div>
+            <div class="option-meta">
+                <span id="cost-DlitelnostHraneniyaVATS"></span>
+                <span id="limit-DlitelnostHraneniyaVATS"></span>
+            </div>
+        </div>
+        <div class="control-wrapper">
+            <div class="custom-select-trigger" onclick="openSelectModal('DlitelnostHraneniyaVATS', 'Срок хранения')">0</div>
+            <select id="DlitelnostHraneniyaVATS" class="hidden-native-select" onchange="runCascade('DlitelnostHraneniyaVATS')">
+                <option value="0">0</option>
+                <option value="1 неделя">1 неделя</option>
+                <option value="1 месяц">1 месяц</option>
+                <option value="3 месяца">3 месяца</option>
+                <option value="6 месяцев">6 месяцев</option>
+                <option value="1 год">1 год</option>
+                <option value="2 года">2 года</option>
+                <option value="4 года">4 года</option>
+            </select>
+        </div>
       </div>
-<div class="calc-row" data-id="AmoBitrix" align="center">
-  <div class="label"><strong>Интеграция с amoCRM или Битрикс 24</strong></div>
-  <div class="input-wrapper"><input type="checkbox" id="AmoBitrix" onchange="runCascade('AmoBitrix')"></div>
-  <div id="cost-AmoBitrix">0</div>
-  <div id="limit-AmoBitrix"></div>
-</div>
 
-<div class="calc-row" data-id="IntegraciyaOtraslevie" align="center">
-  <div class="label">Интеграция с отраслевыми CRM
-    <span class="info-icon">i</span>
-    <div class="tooltip">
-      API, Webhook и загрузка звонков из внешней системы. <br><br>
-      Лимиты на кол-во запросов: <br>
-      DataAPI в минуту — 1–60 = 0; 61–900 = 15 руб. <br>
-      DataAPI в день — 1–500 = 0; 501–1200000 = 0.06 руб. <br>
-      HTTP-уведомления в день — 1–500 = 0; 501–1200000 = 0.02 руб. <br>
-      HTTP-уведомления в минуту — 1–60 = 0; 61–900 = 15 руб. <br>
-      Call API в день — 1–500 = 0; 501–40000 = 1 руб. <br>
-      Call API в минуту — 1–15 = 0; 16–300 = 10 руб.
-    </div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="IntegraciyaOtraslevie" onchange="runCascade('IntegraciyaOtraslevie')"></div>
-  <div id="cost-IntegraciyaOtraslevie">0</div>
-  <div id="limit-IntegraciyaOtraslevie"></div>
-</div>
-
-<div class="calc-row" data-id="UvedomlenieOSobitiyah" align="center">
-  <div class="label">Уведомления о событиях
-    <span class="info-icon">i</span>
-    <div class="tooltip">Уведомления по E-mail и SMS<br>SMS — 3.7 руб/шт</div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="UvedomlenieOSobitiyah" onchange="runCascade('UvedomlenieOSobitiyah')"></div>
-  <div id="cost-UvedomlenieOSobitiyah">0</div>
-  <div id="limit-UvedomlenieOSobitiyah"></div>
-</div>
-
-<div class="calc-row" data-id="VneshnieATS" align="center">
-  <div class="label">Внешние АТС
-    <span class="info-icon">i</span>
-    <div class="tooltip">Звонки между UIS и внешней АТС по коротким добавочным через SMART-транк</div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="VneshnieATS" onchange="runCascade('VneshnieATS')"></div>
-  <div id="cost-VneshnieATS">0</div>
-  <div id="limit-VneshnieATS"></div>
-</div>
-
-<div class="calc-row" data-id="SpasenieKommunikatsiy" align="center">
-  <div class="label">Спасение коммуникаций
-    <span class="info-icon">i</span>
-    <div class="tooltip">
-      - Автоматический перезвон по пропущенным <br>
-      - Автотегирование <br>
-      - Уведомления по E-mail и SMS (SMS — 3.7 руб/шт) <br>
-      - Дашборд с аналитикой по звонкам
-    </div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="SpasenieKommunikatsiy" onchange="runCascade('SpasenieKommunikatsiy')"></div>
-  <div id="cost-SpasenieKommunikatsiy">0</div>
-  <div id="limit-SpasenieKommunikatsiy"></div>
-</div>
-
-<div class="calc-row" data-id="AvtoperezvonPoZayavkam" align="center">
-  <div class="label">Автоперезвон по заявкам с сайта</div>
-  <div class="input-wrapper"><input type="checkbox" id="AvtoperezvonPoZayavkam" onchange="runCascade('AvtoperezvonPoZayavkam')"></div>
-  <div id="cost-AvtoperezvonPoZayavkam">0</div>
-  <div id="limit-AvtoperezvonPoZayavkam"></div>
-</div>
-
-<div class="calc-row" data-id="VezdeKakDoma" align="center">
-  <div class="label">Везде как дома
-    <span class="info-icon">i</span>
-    <div class="tooltip">Автоматический выбор номера при исходящих звонках</div>
-  </div>
-  <div class="input-wrapper"><input type="checkbox" id="VezdeKakDoma" onchange="runCascade('VezdeKakDoma')"></div>
-  <div id="cost-VezdeKakDoma">0</div>
-  <div id="limit-VezdeKakDoma"></div>
-</div>
-
-    </div>
-
-    <!-- Итоговый блок -->
-<div class="cost-header">
-<div class="spacer"></div>
-    <h2>
-      Расчет стоимости сервиса:
-    </h2>
-<div class="btn-group">
-        <button class="btn" onclick="resetForm()">Стереть расчет</button>
-        <!-- //<button class="btn" onclick="exportPDF()">Экспорт в PDF</button> -->
+      <div class="option-row">
+          <div class="option-info">
+              <div class="option-name">Кол-во номеров UIS - Городские/Мобильные</div>
+              <div class="option-meta"><span id="cost-NomeraVATS"></span><span id="limit-NomeraVATS"></span></div>
+          </div>
+          <div class="control-wrapper">
+              <div class="stepper">
+                  <button class="stepper-btn" onclick="stepInput('NomeraVATS', -1)">−</button>
+                  <input type="text" inputmode="numeric" class="stepper-input" id="NomeraVATS" value="0" onchange="runCascade('NomeraVATS')">
+                  <button class="stepper-btn" onclick="stepInput('NomeraVATS', 1)">+</button>
+              </div>
+          </div>
       </div>
-</div>
-    <div class="result-block" id="result">
-  <div class="result-row">
-    <div><strong>Ежемесячный платёж</strong></div>
-    <div id="total-monthly">0</div>
-  </div>
 
-  <div class="result-row">
-    <div>
-      <strong>Минимальный счёт за номер(а) 8800</strong>
-      <span style="position: relative;">
-<span class="info-icon">i</span>
-      <div class="tooltip" style="left: 50%;
-  transform: translateX(-50%) translateY(8px);
-      top: 100%; max-width: 250px;">Расходуется на звонки<br></div>
-</span>
+      <div class="option-row">
+          <div class="option-info">
+              <div class="option-name">Кол-во номеров UIS - 8-800 <span class="info-icon" onclick="openTooltip('tooltip-8800')">i</span></div>
+              <div class="option-meta"><span id="cost-NomeraVATS8800"></span><span id="limit-NomeraVATS8800"></span></div>
+          </div>
+          <div class="control-wrapper">
+              <div class="stepper">
+                  <button class="stepper-btn" onclick="stepInput('NomeraVATS8800', -1)">−</button>
+                  <input type="text" inputmode="numeric" class="stepper-input" id="NomeraVATS8800" value="0" onchange="runCascade('NomeraVATS8800')">
+                  <button class="stepper-btn" onclick="stepInput('NomeraVATS8800', 1)">+</button>
+              </div>
+          </div>
+      </div>
+      
+      <div class="option-row">
+          <div class="option-info">
+              <div class="option-name">Кол-во своих номеров <span class="info-icon" onclick="openTooltip('tooltip-own')">i</span></div>
+              <div class="option-meta"><span id="cost-KolvoSvoihNomerov"></span><span id="limit-KolvoSvoihNomerov"></span></div>
+          </div>
+          <div class="control-wrapper">
+              <div class="stepper">
+                  <button class="stepper-btn" onclick="stepInput('KolvoSvoihNomerov', -1)">−</button>
+                  <input type="text" inputmode="numeric" class="stepper-input" id="KolvoSvoihNomerov" value="0" onchange="runCascade('KolvoSvoihNomerov')">
+                  <button class="stepper-btn" onclick="stepInput('KolvoSvoihNomerov', 1)">+</button>
+              </div>
+          </div>
+      </div>
+
+      <!-- TOTAL NUMBERS (Read Only) -->
+      <div class="option-row">
+        <div class="option-info">
+            <div class="option-name">Кол-во номеров UIS всего</div>
+            <div class="option-meta">
+                <span id="cost-NomeraVATSVsego"></span>
+                <span id="limit-NomeraVATSVsego"></span>
+            </div>
+        </div>
+        <div class="control-wrapper">
+             <div class="readonly-field">
+                 <input type="text" id="NomeraVATSVsego" value="0" disabled style="background:transparent; border:none; width:30px; text-align:center; font-weight:700; color:inherit;">
+                 <span style="font-size:12px; opacity:0.5">🔒</span>
+             </div>
+        </div>
+      </div>
+
+      <!-- FMC GROUP -->
+<div class="fmc-container">
+    <div class="fmc-title">Мобильная связь (FMC-сим карты)</div>
+    
+    <!-- Контейнер для динамических наборов (Сим-карта + Тариф) -->
+    <div id="fmc-bundles-container">
+        <!-- Сюда JS добавит первый набор при загрузке страницы -->
     </div>
-    <div id="total-minimal">0</div>
+    
+    <!-- КНОПКА ДОБАВЛЕНИЯ НАБОРА -->
+    <div style="text-align: center; margin: 15px 0 20px;">
+        <button id="add-fmc-bundle-btn" class="stepper-btn" style="width: auto; padding: 5px 15px; font-size: 14px; background: #E6F0FF; color: var(--color-primary); border: 1px solid var(--color-primary);" onclick="addFmcBundle(false, '200 минут, 1Гб интернета', 1)">
+            + Добавить набор SIM
+        </button>
+    </div>
+
+    <!-- ТОЛЬКО РЕГИОН ДОСТАВКИ (Он один на все сим-карты) -->
+    <div class="option-row stacked" style="border-top: 1px solid #eef2f6;">
+        <div class="option-info">
+            <div class="option-name">Регион доставки <span class="info-icon" onclick="openTooltip('tooltip-delivery-main')">i</span></div>
+            <div class="option-meta"><span id="cost-RegionDostavki"></span></div>
+        </div>
+        <div class="control-wrapper">
+            <div class="custom-select-trigger" onclick="openSelectModal('RegionDostavki', 'Регион доставки')">нет</div>
+            <select id="RegionDostavki" class="hidden-native-select" onchange="runCascade('RegionDostavki')">
+                <option value="нет">нет</option>
+                <option value="Москва">Москва</option>
+                <option value="Санкт-Петербург">Санкт-Петербург</option>
+                <option value="Московская область">Московская область</option>
+                <option value="Ленинградская область">Ленинградская область</option>
+                <option value="Центральная Россия, Поволжье">Центральная Россия, Поволжье</option>
+                <option value="Юг, Урал, Сибирь">Юг, Урал, Сибирь</option>
+                <option value="Дальний Восток">Дальний Восток</option>
+            </select>
+        </div>
+    </div>
+    <div class="fmc-cost-row">
+        <span id="cost-RegionDostavki-placeholder"></span>
+    </div>
+</div>
+      <!-- EXPERT TOGGLE -->
+      <div style="text-align:center;">
+          <div class="expert-toggle-btn" onclick="toggleExpert()">
+              <span>Дополнительные опции ВАТС</span>
+              <div class="toggle-icon"></div>
+          </div>
+      </div>
+
+      <!-- Expert Block -->
+      <div id="block-expert" class="expert-block card-group" style="display: none;">
+          <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Кол-во линий группового вызова</div>
+                <div class="option-meta"><span id="cost-LiniyGrupovogoVizova"></span><span id="limit-LiniyGrupovogoVizova"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="stepper">
+                    <button class="stepper-btn" onclick="stepInput('LiniyGrupovogoVizova', -1)">−</button>
+                    <input type="text" inputmode="numeric" class="stepper-input" id="LiniyGrupovogoVizova" value="0" onchange="runCascade('LiniyGrupovogoVizova')">
+                    <button class="stepper-btn" onclick="stepInput('LiniyGrupovogoVizova', 1)">+</button>
+                </div>
+            </div>
+          </div>
+           <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Кол-во линий исходящих звонков</div>
+                <div class="option-meta"><span id="cost-LiniyIshodyashihZvonkov"></span><span id="limit-LiniyIshodyashihZvonkov"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="stepper">
+                    <button class="stepper-btn" onclick="stepInput('LiniyIshodyashihZvonkov', -1)">−</button>
+                    <input type="text" inputmode="numeric" class="stepper-input" id="LiniyIshodyashihZvonkov" value="0" onchange="runCascade('LiniyIshodyashihZvonkov')">
+                    <button class="stepper-btn" onclick="stepInput('LiniyIshodyashihZvonkov', 1)">+</button>
+                </div>
+            </div>
+          </div>
+          <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Кол-во SIP-транков</div>
+                <div class="option-meta"><span id="cost-KolvoSIPTrankov"></span><span id="limit-KolvoSIPTrankov"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="stepper">
+                    <button class="stepper-btn" onclick="stepInput('KolvoSIPTrankov', -1)">−</button>
+                    <input type="text" inputmode="numeric" class="stepper-input" id="KolvoSIPTrankov" value="0" onchange="runCascade('KolvoSIPTrankov')">
+                    <button class="stepper-btn" onclick="stepInput('KolvoSIPTrankov', 1)">+</button>
+                </div>
+            </div>
+          </div>
+          <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Канальность SIP-транков</div>
+                <div class="option-meta"><span id="cost-KanalnostSIPTrankov"></span><span id="limit-KanalnostSIPTrankov"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="custom-select-trigger" onclick="openSelectModal('KanalnostSIPTrankov', 'Канальность SIP-транков')">0</div>
+                <select id="KanalnostSIPTrankov" class="hidden-native-select" onchange="runCascade('KanalnostSIPTrankov')">
+                    <option value="0">0</option>
+                    <option value="30">30</option>
+                    <option value="60">60</option>
+                    <option value="90">90</option>
+                    <option value="180">180</option>
+                </select>
+            </div>
+          </div>
+          <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Кол-во SIPURI</div>
+                <div class="option-meta"><span id="cost-KolvoSIPURI"></span><span id="limit-KolvoSIPURI"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="stepper">
+                    <button class="stepper-btn" onclick="stepInput('KolvoSIPURI', -1)">−</button>
+                    <input type="text" inputmode="numeric" class="stepper-input" id="KolvoSIPURI" value="0" onchange="runCascade('KolvoSIPURI')">
+                    <button class="stepper-btn" onclick="stepInput('KolvoSIPURI', 1)">+</button>
+                </div>
+            </div>
+          </div>
+          <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Кол-во SIP-аккаунтов</div>
+                <div class="option-meta"><span id="cost-KolvoSIPAkkauntov"></span><span id="limit-KolvoSIPAkkauntov"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="stepper">
+                    <button class="stepper-btn" onclick="stepInput('KolvoSIPAkkauntov', -1)">−</button>
+                    <input type="text" inputmode="numeric" class="stepper-input" id="KolvoSIPAkkauntov" value="0" onchange="runCascade('KolvoSIPAkkauntov')">
+                    <button class="stepper-btn" onclick="stepInput('KolvoSIPAkkauntov', 1)">+</button>
+                </div>
+            </div>
+          </div>
+          <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Канальность SIP-аккаунтов</div>
+                <div class="option-meta"><span id="cost-KanalnostSIPAkkauntov"></span><span id="limit-KanalnostSIPAkkauntov"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="custom-select-trigger" onclick="openSelectModal('KanalnostSIPAkkauntov', 'Канальность SIP-аккаунтов')">0</div>
+                <select id="KanalnostSIPAkkauntov" class="hidden-native-select" onchange="runCascade('KanalnostSIPAkkauntov')">
+                    <option value="0">0</option>
+                    <option value="30">30</option>
+                    <option value="60">60</option>
+                    <option value="90">90</option>
+                    <option value="180">180</option>
+                </select>
+            </div>
+          </div>
+      </div>
+    </section>
+
+    <!-- BLOCK 2: OMNI -->
+    <section class="card card-group">
+        <div class="card-header static">
+            <div class="card-title">Интеграция с мессенджерами</div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Тариф "ОМНИ Чаты"</div>
+                <div class="option-meta"><span id="cost-OMNI"></span><span id="limit-OMNI"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="OMNI" onchange="runCascade('OMNI')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Лицензии сотрудников ОМНИ</div>
+                <div class="option-meta"><span id="cost-KolvoSotrudnikovOMNI"></span><span id="limit-KolvoSotrudnikovOMNI"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="stepper">
+                    <button class="stepper-btn" onclick="stepInput('KolvoSotrudnikovOMNI', -1)">−</button>
+                    <input type="text" inputmode="numeric" class="stepper-input" id="KolvoSotrudnikovOMNI" value="0" onchange="runCascade('KolvoSotrudnikovOMNI')">
+                    <button class="stepper-btn" onclick="stepInput('KolvoSotrudnikovOMNI', 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Кол-во каналов WhatsApp</div>
+                <div class="option-meta"><span id="cost-KolvoWA"></span><span id="limit-KolvoWA"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="stepper">
+                    <button class="stepper-btn" onclick="stepInput('KolvoWA', -1)">−</button>
+                    <input type="text" inputmode="numeric" class="stepper-input" id="KolvoWA" value="0" onchange="runCascade('KolvoWA')">
+                    <button class="stepper-btn" onclick="stepInput('KolvoWA', 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Кол-во каналов WABA <span class="info-icon" onclick="openTooltip('tooltip-waba')">i</span></div>
+                <div class="option-meta"><span id="cost-KolvoWABA"></span><span id="limit-KolvoWABA"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="stepper">
+                    <button class="stepper-btn" onclick="stepInput('KolvoWABA', -1)">−</button>
+                    <input type="text" inputmode="numeric" class="stepper-input" id="KolvoWABA" value="0" onchange="runCascade('KolvoWABA')">
+                    <button class="stepper-btn" onclick="stepInput('KolvoWABA', 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Telegram, Tg Bot, VK Группы, Авито, Циан, АвтоРу, СМС, E-mail</div>
+                <div class="option-meta"><span id="cost-TgVkAvito"></span><span id="limit-TgVkAvito"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="TgVkAvito" onchange="runCascade('TgVkAvito')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">ОМНИ-виджет на сайт <span class="info-icon" onclick="openTooltip('tooltip-omniknopka')">i</span></div>
+                <div class="option-meta"><span id="cost-OMNIKnopka"></span><span id="limit-OMNIKnopka"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="OMNIKnopka" onchange="runCascade('OMNIKnopka')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <!-- BLOCK 3: Analytics -->
+    <section class="card card-group">
+        <div class="card-header collapsed" onclick="toggleAnalytics()">
+            <div class="card-title">Аналитика рекламы</div>
+            <div class="header-toggle-icon"></div>
+        </div>
+        
+        <div id="block-ar" style="display:none;">
+             <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Тариф "Аналитика рекламы"<span class="info-icon" onclick="openTooltip('tooltip-ar')">i</span></div>
+                    <div class="option-meta"><span id="cost-AR"></span><span id="limit-AR"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="AR" onchange="runCascade('AR')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Кол-во сайтов</div>
+                    <div class="option-meta"><span id="cost-KolvoSaitov"></span><span id="limit-KolvoSaitov"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <div class="stepper">
+                        <button class="stepper-btn" onclick="stepInput('KolvoSaitov', -1)">−</button>
+                        <input type="text" inputmode="numeric" class="stepper-input" id="KolvoSaitov" value="0" onchange="runCascade('KolvoSaitov')">
+                        <button class="stepper-btn" onclick="stepInput('KolvoSaitov', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Кол-во пользовательских источников</div>
+                    <div class="option-meta"><span id="cost-KolvoPolzovatelskihIstochnikov"></span><span id="limit-KolvoPolzovatelskihIstochnikov"></span></div>
+                </div>
+                <div class="control-wrapper">
+                     <div class="custom-select-trigger" onclick="openSelectModal('KolvoPolzovatelskihIstochnikov', 'Польз. источники')">0</div>
+                     <select id="KolvoPolzovatelskihIstochnikov" class="hidden-native-select" onchange="runCascade('KolvoPolzovatelskihIstochnikov')">
+                      <option value="0">0</option>
+                      <option value="50">50</option>
+                      <option value="250">250</option>
+                      <option value="500">500</option>
+                      <option value="5000">5000</option>
+                    </select>
+                </div>
+            </div>
+
+             <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Пакет трафика <span class="info-icon" onclick="openTooltip('tooltip-traffic')">i</span></div>
+                    <div class="option-meta"><span id="cost-PaketTrafika"></span><span id="limit-PaketTrafika"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <div class="custom-select-trigger" onclick="openSelectModal('PaketTrafika', 'Пакет трафика')">0</div>
+                    <select id="PaketTrafika" class="hidden-native-select" onchange="runCascade('PaketTrafika')">
+                      <option value="0">0</option>
+                      <option value="10000">10000</option>
+                      <option value="20000">20000</option>
+                      <option value="50000">50000</option>
+                      <option value="100000">100000</option>
+                      <option value="200000">200000</option>
+                      <option value="500000">500000</option>
+                      <option value="безлимит">безлимит</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Коллтрекинг <span class="info-icon" onclick="openTooltip('tooltip-kt')">i</span></div>
+                    <div class="option-meta"><span id="cost-KT"></span><span id="limit-KT"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="KT" onchange="runCascade('KT')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+             <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Кол-во номеров КТ - Городские/Мобильные</div>
+                    <div class="option-meta"><span id="cost-NomeraKT"></span><span id="limit-NomeraKT"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <div class="stepper">
+                        <button class="stepper-btn" onclick="stepInput('NomeraKT', -1)">−</button>
+                        <input type="text" inputmode="numeric" class="stepper-input" id="NomeraKT" value="0" onchange="runCascade('NomeraKT')">
+                        <button class="stepper-btn" onclick="stepInput('NomeraKT', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+             <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Кол-во номеров КТ - 8-800 <span class="info-icon" onclick="openTooltip('tooltip-8800')">i</span></div>
+                    <div class="option-meta"><span id="cost-NomeraKT8800"></span><span id="limit-NomeraKT8800"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <div class="stepper">
+                        <button class="stepper-btn" onclick="stepInput('NomeraKT8800', -1)">−</button>
+                        <input type="text" inputmode="numeric" class="stepper-input" id="NomeraKT8800" value="0" onchange="runCascade('NomeraKT8800')">
+                        <button class="stepper-btn" onclick="stepInput('NomeraKT8800', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+             <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Хранение разговоров</div>
+                    <div class="option-meta"><span id="cost-DlitelnostHraneniyaAR"></span><span id="limit-DlitelnostHraneniyaAR"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <div class="custom-select-trigger" onclick="openSelectModal('DlitelnostHraneniyaAR', 'Срок хранения')">0</div>
+                    <select id="DlitelnostHraneniyaAR" class="hidden-native-select" onchange="runCascade('DlitelnostHraneniyaAR')">
+                      <option value="0">0</option>
+                      <option value="1 неделя">1 неделя</option>
+                      <option value="1 месяц">1 месяц</option>
+                      <option value="3 месяца">3 месяца</option>
+                      <option value="6 месяцев">6 месяцев</option>
+                      <option value="1 год">1 год</option>
+                      <option value="2 года">2 года</option>
+                      <option value="4 года">4 года</option>
+                    </select>
+                </div>
+            </div>
+
+             <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Email-трекинг (кол-во писем в месяц)</div>
+                    <div class="option-meta"><span id="cost-EmailTreking"></span><span id="limit-EmailTreking"></span></div>
+                </div>
+                <div class="control-wrapper">
+                     <div class="custom-select-trigger" onclick="openSelectModal('EmailTreking', 'Email-трекинг')">нет</div>
+                     <select id="EmailTreking" class="hidden-native-select" onchange="runCascade('EmailTreking')">
+                      <option value="нет">нет</option>
+                      <option value="до 100 шт.">до 100 шт.</option>
+                      <option value="больше 100 шт.">больше 100 шт.</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Конструктор отчетов <span class="info-icon" onclick="openTooltip('tooltip-report')">i</span></div>
+                    <div class="option-meta"><span id="cost-KonstruktorOtchetov"></span><span id="limit-KonstruktorOtchetov"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="KonstruktorOtchetov" onchange="runCascade('KonstruktorOtchetov')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Аналитика продаж из CRM <span class="info-icon" onclick="openTooltip('tooltip-crm')">i</span></div>
+                    <div class="option-meta"><span id="cost-AnalitikaProdaj"></span><span id="limit-AnalitikaProdaj"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="AnalitikaProdaj" onchange="runCascade('AnalitikaProdaj')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="option-row">
+                <div class="option-info">
+                    <div class="option-name">Интеграция с виджетами <span class="info-icon" onclick="openTooltip('tooltip-widget')">i</span></div>
+                    <div class="option-meta"><span id="cost-IntegraciyaSVidjetami"></span><span id="limit-IntegraciyaSVidjetami"></span></div>
+                </div>
+                <div class="control-wrapper">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="IntegraciyaSVidjetami" onchange="runCascade('IntegraciyaSVidjetami')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- BLOCK 4: Integrations -->
+     <section class="card card-group">
+        <div class="card-header static">
+            <div class="card-title">Интеграции и доп. опции </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Интеграция с amoCRM или Битрикс24 </div>
+                <div class="option-meta"><span id="cost-AmoBitrix"></span><span id="limit-AmoBitrix"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="AmoBitrix" onchange="runCascade('AmoBitrix')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Интеграция с отраслевыми CRM <span class="info-icon" onclick="openTooltip('tooltip-otrasl')">i</span></div>
+                <div class="option-meta"><span id="cost-IntegraciyaOtraslevie"></span><span id="limit-IntegraciyaOtraslevie"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="IntegraciyaOtraslevie" onchange="runCascade('IntegraciyaOtraslevie')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Уведомления о событиях <span class="info-icon" onclick="openTooltip('tooltip-notify')">i</span></div>
+                <div class="option-meta"><span id="cost-UvedomlenieOSobitiyah"></span><span id="limit-UvedomlenieOSobitiyah"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="UvedomlenieOSobitiyah" onchange="runCascade('UvedomlenieOSobitiyah')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Внешние АТС <span class="info-icon" onclick="openTooltip('tooltip-ats')">i</span></div>
+                <div class="option-meta"><span id="cost-VneshnieATS"></span><span id="limit-VneshnieATS"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="VneshnieATS" onchange="runCascade('VneshnieATS')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Спасение коммуникаций <span class="info-icon" onclick="openTooltip('tooltip-save')">i</span></div>
+                <div class="option-meta"><span id="cost-SpasenieKommunikatsiy"></span><span id="limit-SpasenieKommunikatsiy"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="SpasenieKommunikatsiy" onchange="runCascade('SpasenieKommunikatsiy')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Автоперезвон по заявкам с сайта </div>
+                <div class="option-meta"><span id="cost-AvtoperezvonPoZayavkam"></span><span id="limit-AvtoperezvonPoZayavkam"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="AvtoperezvonPoZayavkam" onchange="runCascade('AvtoperezvonPoZayavkam')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="option-row">
+            <div class="option-info">
+                <div class="option-name">Везде как дома <span class="info-icon" onclick="openTooltip('tooltip-home')">i</span></div>
+                <div class="option-meta"><span id="cost-VezdeKakDoma"></span><span id="limit-VezdeKakDoma"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="VezdeKakDoma" onchange="runCascade('VezdeKakDoma')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </section>
+
+  </div> <!-- End Main Column -->
+  
+  <!-- Right Column: Sticky Sidebar (Desktop Only) -->
+  <div class="sidebar-column">
+    <div class="summary-card">
+      <div class="summary-total">
+        <div class="summary-total-label">Ежемесячный платёж</div>
+        <div class="summary-total-value">
+          <span id="total-monthly">0</span> <span class="summary-currency">₽ / мес</span>
+        </div>
+      </div>
+      
+      <div class="summary-details">
+        <div class="summary-row">
+          <span>Мин. счет за связь <span class="info-icon" onclick="openTooltip('tooltip-min8800')" style="background:rgba(255,255,255,0.2);color:white">i</span></span>
+          <span id="total-minimal">0</span>
+        </div>
+        <div class="summary-row">
+          <span>Покупка номеров <span class="info-icon" onclick="openTooltip('tooltip-connect')" style="background:rgba(255,255,255,0.2);color:white">i</span></span>
+          <span id="total-connection">0</span>
+        </div>
+        <div class="summary-row">
+          <span>Доставка FMC-сим карт <span class="info-icon" onclick="openTooltip('tooltip-delivery')" style="background:rgba(255,255,255,0.2);color:white">i</span></span>
+          <span id="total-delivery">0</span>
+        </div>
+        <div class="summary-row">
+          <span>Гарантийный платеж <span class="info-icon" onclick="openTooltip('tooltip-guarantee')" style="background:rgba(255,255,255,0.2);color:white">i</span></span>
+          <span id="total-guarantee">0</span>
+        </div>
+      </div>
+
+      <div class="button-group">
+          <button class="btn-reset" onclick="resetForm()">Стереть расчет</button>
+          <button class="btn-print" onclick="printKP()">Печать</button>
+      </div>
+    </div>
   </div>
 
-  <div class="result-row">
-    <div><strong>Подключение номеров (разово)</strong></div>
-    <div id="total-connection">0</div>
-  </div>
-
-  <div class="result-row">
-    <div><strong>Доставка FMC-сим карт (разово)</strong></div>
-    <div id="total-delivery">0</div>
-  </div>
-	    <div class="result-row">
-  <div>
-    <strong>Гарантийный платёж</strong>
-	  <span style="position: relative; display: inline-block;">
-    <span class="info-icon">i</span>
-    <div class="tooltip" id="tooltip-guarantee" style="left: 50%;
-  transform: translateX(-50%) translateY(-8px);
-      bottom: 100%; top: auto; max-width: 250px;">Будет "заморожен" на счете как гарантия оплаты и возвращен или учтен при закрытии договора.</div>
-		  </span>
-  </div>
-  <div id="total-guarantee">0</div>
 </div>
 
+<!-- MOBILE BOTTOM SHEET -->
+<!-- MOBILE BOTTOM SHEET -->
+<div class="bottom-sheet" id="mobileSheet">
+    <div class="sheet-header" onclick="toggleSheet()">
+        <div class="sheet-main-info">
+            <div class="sheet-label">Ежемесячный платеж</div>
+            <!-- БЫЛО: 0, СТАЛО: 0 ₽ / мес -->
+            <div class="sheet-price"><span id="mobile-total">0 ₽ / мес</span></div>
+        </div>
+        <div class="sheet-icon">▲</div>
+    </div>
+    <div class="sheet-content">
+        <div class="sheet-row">
+            <span>Минимальный платеж за связь <span class="info-icon" onclick="openTooltip('tooltip-min8800')">i</span></span>
+            <!-- БЫЛО: 0, СТАЛО: 0 ₽ / мес -->
+            <span id="mobile-minimal">0 ₽ / мес</span>
+        </div>
+        <div class="sheet-row">
+            <span>Покупка номеров <span class="info-icon" onclick="openTooltip('tooltip-connect')">i</span></span>
+            <!-- БЫЛО: 0, СТАЛО: 0 ₽ -->
+            <span id="mobile-connection">0 ₽</span>
+        </div>
+        <div class="sheet-row">
+            <span>Доставка FMC-сим карт <span class="info-icon" onclick="openTooltip('tooltip-delivery')">i</span></span>
+            <!-- БЫЛО: 0, СТАЛО: 0 ₽ -->
+            <span id="mobile-delivery">0 ₽</span>
+        </div>
+        <div class="sheet-row">
+            <span>Гарантийный платеж <span class="info-icon" onclick="openTooltip('tooltip-guarantee')">i</span></span>
+            <!-- БЫЛО: 0, СТАЛО: 0 ₽ -->
+            <span id="mobile-guarantee">0 ₽</span>
+        </div>
+        <button class="sheet-reset" onclick="resetForm(); toggleSheet()">Стереть расчет</button>
+        <button class="btn-manager-print" style="background:#0000aa; color:white; margin-top:10px;" onclick="printKP()">Печать</button>
+    </div>
 </div>
 
-  </div>
+<!-- INFO MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal(event, true)">&times;</span>
+        <div class="modal-text" id="modalText"></div>
+    </div>
+</div>
 
-  <script>
-  // Обработка пустых числовых полей и placeholder
-  document.querySelectorAll('input[type="number"]').forEach(input => {
-    // Серый placeholder
-    //input.setAttribute("placeholder", "0");
 
-    // Если значение 0 при загрузке — делаем поле визуально пустым
-    //if (input.value === "0") input.value = "";
 
-    // При фокусе — если поле было 0, очищаем его
-    input.addEventListener("focus", () => {
-      if (input.value === "0") input.value = "";
-    });
+<!-- SELECT MODAL -->
+<div class="modal-overlay" id="selectModalOverlay" onclick="closeSelectModal(event)">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeSelectModal(event, true)">&times;</span>
+        <span class="modal-title" id="selectModalTitle">Выбор</span>
+        <div class="modal-options-list" id="selectModalOptions">
+            <!-- Options injected by JS -->
+        </div>
+    </div>
+</div>
 
-    // При уходе из поля — если пусто, вернуть 0
-    input.addEventListener("blur", () => {
-      if (input.value === "") input.value = "0";
-    });
-  });
-	  
+<!-- HIDDEN PRINT AREA -->
+<div id="print-area">
+    <div class="print-header">
+        <div class="print-logo">UIS</div>
+        <div class="print-title">Предварительный расчет</div>
+    </div>
+    
+
+    <div id="print-sections-container">
+        <!-- Sections populated by JS -->
+    </div>
+    
+    <!-- Totals Block - At the bottom -->
+    <div class="print-totals">
+        <div class="print-total-row main">
+            <span class="label">Ежемесячный платёж</span>
+            <span class="value" id="print-total-monthly">0 ₽</span>
+        </div>
+        <div class="print-total-row">
+            <div>
+                <span>Минимальный платеж за связь</span>
+                <span class="print-total-helper" id="print-total-minimal-desc">Расходуется на звонки с номерами 8-800</span>
+            </div>
+            <span id="print-total-minimal">0 ₽</span>
+        </div>
+        <div class="print-total-row">
+            <div>
+                <span>Покупка номеров</span>
+                <span class="print-total-helper">Разово за подключаемые номера и/или FMC-сим карты</span>
+            </div>
+            <span id="print-total-connection">0 ₽</span>
+        </div>
+        <div class="print-total-row">
+            <div>
+                <span>Доставка FMC-сим карт</span>
+                <span class="print-total-helper">Разово за один адрес</span>
+            </div>
+            <span id="print-total-delivery">0 ₽</span>
+        </div>
+        <div class="print-total-row" style="margin-top:15px; padding-top:15px; border-top:1px solid #ddd;">
+            <div>
+                <span>Гарантийный платеж</span>
+                <span class="print-total-helper" id="print-total-guarantee-desc"></span>
+            </div>
+            <span id="print-total-guarantee" style="font-weight:700">0 ₽</span>
+        </div>
+    </div>
+
+    <div class="print-social">
+        <div class="print-social-title"></div>
+        <div class="print-social-list">
+            <a href="https://t.me/uis_technology" target="_blank" class="print-social-link"><span>Оперативная информация</span></a>
+            <a href="https://t.me/uiscom_ru" target="_blank" class="print-social-link"><span>UIS говорит</span></a>
+            <a href="https://vk.com/uiscom" target="_blank" class="print-social-link"><span>ВКонтакте</span></a>
+            <a href="https://vc.ru/uiscom" target="_blank" class="print-social-link"><span>Блог на VC.ru</span></a>
+            <a href="https://rutube.ru/channel/24800224/" target="_blank" class="print-social-link"><span>RUTUBE</span></a>
+            <a href="https://dzen.ru/id/5d4a870ef2df2500ae39c4ad?share_to=link" target="_blank" class="print-social-link"><span>Дзен</span></a>
+        </div>
+    </div>
+</div>
+
+<!-- Tooltip Content Storage (Hidden) -->
+<div class="tooltip-content-hidden">
+    <!-- 1) Тариф "ВАТС" -->
+    <div id="tooltip-vats">
+        <b>Базовые сценарии звонков:</b><br>
+        • Голосовое меню (IVR) и приветствия<br>
+        • Переадресация на отделы и сотрудников<br>
+        • Распределение по графику работы<br>
+        • Переадресация на персонального менеджера из CRM<br><br>
+        <b>Умное распределение:</b><br>
+        • Одновременно всем<br>
+        • По приоритету<br><br>
+        <b>Включено:</b><br>
+        • До 3-х устройств на сотрудника (SIP/FMC/Мобильный)<br>
+        • Выбор исходящего номера (АОН)<br>
+        • Оценка качества разговора
+    </div>
+
+    <!-- 2) Опция "ВАТС Pro" -->
+    <div id="tooltip-vatspro">
+        <b>Продвинутая маршрутизация звонков:</b><br>
+        • На последнего сотрудника (кто говорил)<br>
+        • По виртуальным номерам и сегментам<br>
+        • По региону звонящего и данным из CRM<br>
+        • По количеству, длительности и процентам<br><br>
+        <b>Функции колл-центра:</b><br>
+        • Суфлирование и режим "Тренер"<br>
+        • Автоперезвон (Callback) и автообзвон (Callout)<br>
+        • Управление очередями (не звонить ранее чем)<br>
+        • Опции разговора<br><br>
+        <b>Расширения:</b><br>
+        • До 6 устройств на сотрудника<br>
+        • Канальность SIPURI -> 2
+    </div>
+
+    <!-- 3) Номера 8-800 -->
+    <div id="tooltip-8800">
+        <b>+700 ₽ / мес</b> (за каждый номер) — минимальный платеж за связь<br>
+        Расходуется на оплату входящих минут
+    </div>
+
+    <!-- 4) Свои номера -->
+    <div id="tooltip-own">
+        Подключение вашего номера, если оператор выдает SIP-настройки (логин, пароль, сервер).<br>
+        Сохраняете свой номер, но пользуетесь всей мощью нашей ВАТС.
+    </div>
+
+    <!-- Портация FMC (оставил как было, с форматированием) -->
+    <div id="tooltip-fmc">
+        Портация своих номеров — <b>0 руб.</b><br>
+        (только сим МСК и обл.)
+    </div>
+
+    <!-- 5) Каналы WABA -->
+    <div id="tooltip-waba">
+        <b>Официальный WhatsApp Business API</b><br><br>
+        Cтоимость диалогов:<br>
+        • маркетинговые шаблоны: 9,2р.<br>
+        • авторизационные шаблоны: 5,52р.<br>
+        • пользовательские шаблоны: 4,94р.<br>
+        • сервисные шаблоны: 4,6р.
+    </div>
+
+    <!-- 6) ОМНИ виджет -->
+    <div id="tooltip-omniknopka">
+        • Кнопки мессенджеров (Telegram, WA, VK, ...)<br>
+        • Формы заявок и обратного звонка<br>
+        • Триггерные цепочки<br>
+        • Онлайн-чат<br>
+        Дизайн легко адаптируется под ваш сайт.
+    </div>
+
+    <!-- 7) Аналитика рекламы -->
+    <div id="tooltip-ar">
+        <b>Контроль маркетинга:</b><br>
+        • Web-аналитика - фиксируем трафик на сайте, распределяем по источникам<br>
+        • Запись и тегирование звонков<br>
+        • Сбор заявок с сайта (формы JS API, Tilda, Marquiz)<br><br>
+        <b>Отчетность:</b><br>
+        • Готовые сводные отчеты (без редактирования)<br>
+        • Выгрузка сырых данных<br>
+        • Настройка целей<br>
+        • Интеграция с Яндекс.Метрикой и рекламными кабинетами
+    </div>
+
+    <!-- 8) Пакет трафика -->
+    <div id="tooltip-traffic">
+        Стоимость обработки одного посетителя сайта сверх или без включенного пакета — <b>0,20 ₽</b>
+    </div>
+
+    <!-- 9) Коллтрекинг -->
+    <div id="tooltip-kt">
+        Определение источника звонка с точностью до ключевого слова.<br>
+        • <b>Динамический:</b> для онлайн-рекламы<br>
+        • <b>Статический:</b> для карт, офлайна и соцсетей<br>
+        Автоматический мониторинг КТ и резервные номера
+    </div>
+
+    <!-- 10) Конструктор отчетов -->
+    <div id="tooltip-report">
+        <b>Создание собственных отчетов и дашбордов:</b><br>
+        • Настраиваемые вложенности и столбцы<br>
+        • Настройка моделей атрибуции
+    </div>
+
+    <!-- 11) Аналитика продаж из CRM -->
+    <div id="tooltip-crm">
+        Двусторонний обмен данными<br> Загрузка статусов сделок и суммы продаж из CRM в аналитику<br>
+        Позволяет считать <b>ROI</b> и реальную прибыль с рекламы
+    </div>
+
+    <!-- 12) Интеграция с отраслевыми CRM (Отформатированный оригинал) -->
+    <div id="tooltip-otrasl">
+        API, Webhook и загрузка звонков из внешней системы.<br>
+        <b>Лимиты на кол-во запросов:</b><br>
+        • DataAPI в минуту: 1–60 = 0₽; 61–900 = 15₽<br>
+        • DataAPI в день: 1–500 = 0₽; 501+ = 0.06₽<br>
+        • HTTP-уведомления в день: 1–500 = 0₽; 501+ = 0.02₽<br>
+        • HTTP-уведомления в минуту: 1–60 = 0₽; 61–900 = 15₽<br>
+        • Call API в день: 1–500 = 0₽; 501–40000 = 1₽<br>
+        • Call API в минуту: 1–15 = 0₽; 16–300 = 10₽
+    </div>
+
+    <!-- 13) Уведомления -->
+    <div id="tooltip-notify">
+        Уведомления по E-mail и SMS о разных событиях в ВАТС и ОМНИ.<br>
+        Стоимость SMS — <b>3,70 ₽/шт</b>
+    </div>
+
+    <!-- 14) Внешние АТС -->
+    <div id="tooltip-ats">
+        Позволяет звонить по коротким добавочным между разными АТС
+    </div>
+
+    <!-- 15) Спасение коммуникаций -->
+    <div id="tooltip-save">
+        • Автоматический перезвон по пропущенным<br>
+        • Автотегирование звонков<br>
+        • Уведомления по E-mail и SMS о разных событиях в ВАТС и ОМНИ. Стоимость SMS — 3,70 ₽/шт<br>
+        • Дашборд с аналитикой по звонкам
+    </div>
+
+    <!-- 16) Везде как дома -->
+    <div id="tooltip-home">
+        Автоматический выбор номера при исходящих звонках.<br>
+        <i>Повышает вероятность, что клиент ответит на звонок.</i>
+    </div>
+
+    <!-- Мин. счет 8800 (дубль для итога) -->
+    <div id="tooltip-min8800">
+        Расходуется на звонки с номерами 8-800
+    </div>
+
+    <!-- 18) Гарантийный платеж -->
+    <div id="tooltip-guarantee">
+        В связи с постоплатой предотвращает приостановку услуг. Остается на счете и увеличивает кредитный лимит.<br>
+        Возвращается при закрытии договора.
+    </div>
+
+    <!-- 20) Интеграция с виджетами -->
+    <div id="tooltip-widget">
+        Интеграция аналитики рекламы с виджетами на вашем сайте (чаты, квизы, попапы).
+    </div>
+
+    <!-- 19) Покупка номеров -->
+    <div id="tooltip-connect">
+        Единовременный платеж за подключение виртуальных номеров и FMC сим-карт.
+    </div>
+
+    <!-- Доставка (обычная) -->
+    <div id="tooltip-delivery">
+        Указана стоимость доставки на один адрес
+    </div>
+
+    <!-- 17) Регион доставки -->
+    <div id="tooltip-delivery-main">
+        Указана стоимость доставки на один адрес
+    </div>
+</div>
+
+<script>
+    /* --- UI LOGIC --- */
+    
+    // Toggle Visibility
     function toggleExpert() {
-      const block = document.getElementById('block-expert');
-      const toggle = document.querySelector('.expert-toggle');
-      block.classList.toggle('visible');
-      toggle.textContent = block.classList.contains('visible') ? 'Тонкая настройка ВАТС (скрыть)' : 'Дополнительные опции ВАТС (показать)';
+        const block = document.getElementById('block-expert');
+        const trigger = document.querySelector('.expert-toggle-btn');
+        const isHidden = block.style.display === "none";
+        block.style.display = isHidden ? "block" : "none";
+        trigger.classList.toggle('active', isHidden);
     }
+
+    function toggleAnalytics() {
+        const block = document.getElementById('block-ar');
+        const header = document.querySelector('.card-header.collapsed, .card-header:not(.static)');
+        const isHidden = block.style.display === "none";
+        block.style.display = isHidden ? "block" : "none";
+        if(header) header.classList.toggle('collapsed', !isHidden);
+    }
+
+    // Custom Stepper Logic
+    function stepInput(id, delta) {
+        const input = document.getElementById(id);
+        if(input.disabled) return;
+        let val = parseInt(input.value) || 0;
+        val += delta;
+        if (val < 0) val = 0;
+        input.value = val;
+        runCascade(id);
+    }
+
+    // --- MODAL LOGIC (Info) ---
+    function openTooltip(contentId) {
+        const text = document.getElementById(contentId).innerHTML;
+        document.getElementById('modalText').innerHTML = text;
+        document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal(e, force) {
+        if (force || e.target.id === 'modalOverlay') {
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+    }
+
+    // --- SELECT MODAL LOGIC ---
+    let currentSelectId = null;
+
+    function openSelectModal(selectId, title) {
+        currentSelectId = selectId;
+        const nativeSelect = document.getElementById(selectId);
+        const options = Array.from(nativeSelect.options);
+        const container = document.getElementById('selectModalOptions');
+        const modalTitle = document.getElementById('selectModalTitle');
+        
+        container.innerHTML = '';
+        modalTitle.textContent = title || "Выберите опцию";
+        
+        options.forEach(opt => {
+            const item = document.createElement('div');
+            item.className = 'modal-option-item';
+            if (opt.selected) item.classList.add('selected');
+            
+            // --- НАЧАЛО ИЗМЕНЕНИЯ ---
+            let textToShow = opt.text;
+            // Если это пакет трафика и это число (не "безлимит" и не "0")
+            if (selectId === 'PaketTrafika' && !isNaN(parseInt(textToShow)) && textToShow !== "0") {
+                textToShow = parseInt(textToShow).toLocaleString('ru-RU');
+            }
+            item.textContent = textToShow;
+            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
+            item.onclick = () => selectOptionInModal(opt.value);
+            container.appendChild(item);
+        });
+
+        document.getElementById('selectModalOverlay').classList.add('open');
+        document.body.classList.add('no-scroll');
+    }
+
+    function selectOptionInModal(value) {
+        const nativeSelect = document.getElementById(currentSelectId);
+        nativeSelect.value = value;
+        document.getElementById('selectModalOverlay').classList.remove('open');
+        updateSelectTrigger(currentSelectId);
+        runCascade(currentSelectId);
+    }
+
+    function closeSelectModal(e, force) {
+        if (force || e.target.id === 'selectModalOverlay') {
+            document.getElementById('selectModalOverlay').classList.remove('open');
+        }
+    }
+    
+    // Updates the visual "button" for the select
+    function updateSelectTrigger(id) {
+        const nativeSelect = document.getElementById(id);
+        const trigger = nativeSelect.parentElement.querySelector('.custom-select-trigger');
+        if (trigger) {
+            let text = nativeSelect.options[nativeSelect.selectedIndex].text;
+            
+            // --- НАЧАЛО ИЗМЕНЕНИЯ ---
+            if (id === 'PaketTrafika' && !isNaN(parseInt(text)) && text !== "0") {
+                text = parseInt(text).toLocaleString('ru-RU');
+            }
+            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+            
+            trigger.textContent = text;
+        }
+    }
+    
+    // --- MOBILE SHEET LOGIC ---
+    let isSheetOpen = false;
+    function toggleSheet() {
+        const content = document.querySelector('.sheet-content');
+        const icon = document.querySelector('.sheet-icon');
+        isSheetOpen = !isSheetOpen;
+        
+        if (isSheetOpen) {
+            content.classList.add('open');
+            icon.style.transform = "rotate(180deg)";
+        } else {
+            content.classList.remove('open');
+            icon.style.transform = "rotate(0deg)";
+        }
+    }
+
+    function updateMobileSheet(total, minimal, connect, delivery, guarantee) {
+        document.getElementById('mobile-total').textContent = total;
+        document.getElementById('mobile-minimal').textContent = minimal;
+        document.getElementById('mobile-connection').textContent = connect;
+        document.getElementById('mobile-delivery').textContent = delivery;
+        document.getElementById('mobile-guarantee').textContent = guarantee;
+    }
+
+    document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
+      input.addEventListener("focus", function() { this.select(); });
+      if (!input.id.startsWith("mgr")) {
+        input.addEventListener("blur", () => { if (input.value === "") input.value = "0"; });
+      }
+    });
+
+
+
+// --- НОВАЯ ЛОГИКА ДИНАМИЧЕСКИХ FMC НАБОРОВ ---
+
+// Глобальный счетчик для обеспечения уникальности ID (не сбрасывается при удалении)
+let fmcUniqueIdCounter = 0; 
+const MAX_FMC_BUNDLES = 5;
+
+// Добавляет новый набор по шаблону
+function addFmcBundle(isRestoring = false, initialTarif = '200 минут, 1Гб интернета', initialCount = 1) {
+    const currentCount = document.querySelectorAll('#fmc-bundles-container > .fmc-subgroup').length;
+    if (currentCount >= MAX_FMC_BUNDLES) return;
+
+    // Включаем ВАТС, если она выключена, ПЕРЕД добавлением DOM, чтобы не было конфликтов
+    if (!isRestoring && !getCheckbox("VATS")) {
+        const vatsCheckbox = document.getElementById("VATS");
+        if(vatsCheckbox) {
+             vatsCheckbox.checked = true;
+             runCascade("VATS");
+        }
+    }
+
+    fmcUniqueIdCounter++;
+    const newId = fmcUniqueIdCounter;
+    const container = document.getElementById('fmc-bundles-container');
+    
+    // Клонируем содержимое шаблона
+    const templateContent = document.getElementById('fmc-bundle-template').content;
+    const newBundle = templateContent.cloneNode(true).querySelector('.fmc-subgroup');
+
+    // 1. Замена ID и атрибутов внутри клонированного элемента
+    newBundle.setAttribute('data-index', newId);
+    newBundle.innerHTML = newBundle.innerHTML.replace(/INDEX_ID/g, newId);
+    newBundle.querySelector('.bundle-num').textContent = currentCount + 1;
+
+    container.appendChild(newBundle); 
+
+    // 2. Установка начальных значений для нового набора
+    const countInput = document.getElementById('KolvoFMC_' + newId);
+    const tarifSelect = document.getElementById('TarifFMC_' + newId);
+    
+    // --- ИСПРАВЛЕНИЕ: Явно устанавливаем значения ---
+    if(countInput) {
+        countInput.setAttribute('value', initialCount);
+        countInput.value = initialCount;
+    }
+    if(tarifSelect) {
+        tarifSelect.value = initialTarif;
+    }
+
+    // 3. Обновление нумерации и кнопок
+    updateFmcLabels();
+    
+    if (currentCount + 1 >= MAX_FMC_BUNDLES) {
+        document.getElementById('add-fmc-bundle-btn').style.display = 'none';
+    }
+    
+    // Обновление кастомных селектов
+    newBundle.querySelectorAll('select').forEach(s => updateSelectTrigger(s.id));
+    
+    // 4. Запускаем каскад (это должно установить минимум, если нужно)
+    if (!isRestoring) {
+        runCascade('KolvoFMC_' + newId); // Запускаем с поля кол-ва
+    } else {
+        // При восстановлении просто пересчитываем итоги
+        runCascade('KolvoFMC_' + newId); 
+    }
+}
+
+// Удаляет набор
+function removeFmcBundle(id) {
+    const bundle = document.querySelector(`[data-index="${id}"]`);
+    if (bundle) {
+        // Обнуляем значения чтобы убрать стоимость перед удалением
+        const input = document.getElementById('KolvoFMC_' + id);
+        if(input) input.value = 0;
+        
+        bundle.remove();
+        
+        updateFmcLabels();
+        document.getElementById('add-fmc-bundle-btn').style.display = 'block';
+
+        // Если все FMC удалены, инициируем очистку Региона доставки
+        if (document.querySelectorAll('#fmc-bundles-container > .fmc-subgroup').length === 0) {
+            const reg = document.getElementById('RegionDostavki');
+            if(reg) {
+                reg.value = 'нет';
+                updateSelectTrigger('RegionDostavki');
+            }
+        }
+        
+        // Важно: запускаем пересчет после удаления DOM
+        updateTotals();
+    }
+}
+
+// Обновляет нумерацию и скрывает/показывает кнопки удаления
+function updateFmcLabels() {
+    const bundles = document.querySelectorAll('#fmc-bundles-container > .fmc-subgroup');
+    bundles.forEach((bundle, index) => {
+        const numEl = bundle.querySelector('.bundle-num');
+        if (numEl) numEl.textContent = index + 1;
+        
+        const removeBtn = bundle.querySelector('.remove-bundle-btn');
+        if(removeBtn) removeBtn.style.display = 'flex';
+    });
+}
+
+function clearFmcBundles() {
+    const container = document.getElementById('fmc-bundles-container');
+    container.innerHTML = '';
+    fmcUniqueIdCounter = 0; // Сбрасываем счетчик для чистого старта
+    document.getElementById('add-fmc-bundle-btn').style.display = 'block';
+}
+
+// Хелпер для показа красивых уведомлений
+    function showToast(type, title, message, duration = 0) {
+        const toast = document.getElementById('mobile-toast');
+        const iconEl = document.getElementById('toast-icon');
+        const titleEl = document.getElementById('toast-title');
+        const msgEl = document.getElementById('toast-message');
+        
+        // Сброс классов
+        toast.className = ''; 
+        toast.classList.add('visible'); // Показываем фон
+        
+        if (type === 'success') {
+            toast.classList.add('toast-type-success');
+            iconEl.textContent = '✅';
+        } else if (type === 'error') {
+            toast.classList.add('toast-type-error');
+            iconEl.textContent = '❌';
+        } else {
+            toast.classList.add('toast-type-loading');
+            iconEl.textContent = '⏳';
+        }
+        
+        titleEl.innerHTML = title;
+        msgEl.innerHTML = message;
+        
+        // Авто-скрытие (если duration > 0)
+        if (duration > 0) {
+            setTimeout(() => {
+                closeToast();
+            }, duration);
+        }
+    }
+    
+    function closeToast() {
+        document.getElementById('mobile-toast').classList.remove('visible');
+    }
+    
+    function closeToastBackdrop(e) {
+        if (e.target.id === 'mobile-toast') {
+            closeToast();
+        }
+    }
+
+    // --- Sanitization Helper (STRIP TAGS) ---
+    function escapeHtml(text) {
+        if (!text) return text;
+        // Removes <...> entirely to be safe
+        return text.replace(/<[^>]*>?/gm, '');
+    }
+
+    async function printKP() {
+        if (typeof ym === 'function') {
+            ym(105781169,'reachGoal','print_kp');
+        }
+
+        const SERVER_URL = "https://gunevgeniy-uis-pdf-server-eeac.twc1.net/generate-pdf";
+
+        // --- ГЕНЕРАЦИЯ ТАБЛИЦЫ ---
+        const container = document.getElementById('print-sections-container');
+        container.innerHTML = ''; 
+        const sections = document.querySelectorAll('.card');
+        
+        let fmcSectionAdded = false;
+
+        sections.forEach(card => {
+            const titleEl = card.querySelector('.card-title');
+            if (!titleEl) return;
+            const titleText = titleEl.textContent.trim();
+            const optionRows = card.querySelectorAll('.option-row');
+            const tableRows = [];
+            
+            const hasFMC = card.querySelector('.fmc-container');
+
+            optionRows.forEach(row => {
+                if (row.closest('.fmc-container')) return;
+
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                const number = row.querySelector('input[type="number"], input.stepper-input');
+                const select = row.querySelector('select');
+                const readonly = row.querySelector('#NomeraVATSVsego');
+                let isActive = false;
+                let valueText = "";
+                
+                if (checkbox && checkbox.checked) { isActive = true; valueText = "Включено"; } 
+                else if (number) {
+                    const numVal = parseInt(number.value) || 0;
+                    if (number.id === 'LiniyGrupovogoVizova') { if (numVal > 3) isActive = true; } 
+                    else if (number.id === 'LiniyIshodyashihZvonkov') { if (numVal > 30) isActive = true; } 
+                    else if (numVal > 0) { isActive = true; }
+                    if (isActive) valueText = number.value + " шт.";
+                } else if (select && select.value !== "0" && select.value !== "нет") {
+                    isActive = true;
+                    valueText = select.options[select.selectedIndex].text;
+                    if (select.id === 'PaketTrafika' && valueText !== "безлимит") {
+                        valueText = parseInt(valueText).toLocaleString('ru-RU');
+                    }
+                } else if (readonly && parseInt(readonly.value) > 0) {
+                    isActive = true;
+                    valueText = readonly.value + " шт.";
+                }
+
+                // Синхронизация хранения разговоров для PDF
+                if (select && (select.id === 'DlitelnostHraneniyaVATS' || select.id === 'DlitelnostHraneniyaAR')) {
+                    const vatsVal = document.getElementById("DlitelnostHraneniyaVATS")?.value;
+                    const arVal = document.getElementById("DlitelnostHraneniyaAR")?.value;
+                    const levels = ["0", "1 неделя", "1 месяц", "3 месяца", "6 месяцев", "1 год", "2 года", "4 года"];
+                    
+                    const vatsIdx = levels.indexOf(vatsVal);
+                    const arIdx = levels.indexOf(arVal);
+
+                    if (vatsIdx > 0 && arIdx > 0) {
+                        const maxIdx = Math.max(vatsIdx, arIdx);
+                        valueText = levels[maxIdx];
+                    }
+                }
+
+                if (isActive) {
+                    const nameEl = row.querySelector('.option-name');
+                    let nameText = nameEl.innerText.replace('i', '').trim();
+                    const infoIcon = row.querySelector('.info-icon');
+                    let descText = "";
+                    if (infoIcon) {
+                        const onClickAttr = infoIcon.getAttribute('onclick');
+                        if (match = onClickAttr.match(/'([^']+)'/)) {
+                            const tooltipContent = document.getElementById(match[1]);
+                            if (tooltipContent) descText = tooltipContent.innerHTML;
+                        }
+                    }
+                    const metaBadges = row.querySelectorAll('.price-badge');
+                    let costHtml = "";
+                    metaBadges.forEach(badge => { costHtml += `<div>${badge.textContent}</div>`; });
+
+                    if (checkbox && (checkbox.id === 'TgVkAvito' || checkbox.id === 'OMNIKnopka') || (number && number.id === 'KolvoSaitov')) {
+                        costHtml = `<div class="price-badge">безлимитно</div>`;
+                    }
+                    
+                    tableRows.push(`<tr><td style="width:70%"><div class="print-row-name">${nameText} <span style="font-weight:400; color:#555;">(${valueText})</span></div>${descText ? `<div class="print-row-desc">${descText}</div>` : ''}</td><td style="width:30%"><div class="print-row-value">${costHtml}</div></td></tr>`);
+                }
+            });
+
+            if (tableRows.length > 0) {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'print-section';
+                sectionDiv.innerHTML = `<div class="print-section-title">${titleText}</div><table class="print-table"><tbody>${tableRows.join('')}</tbody></table>`;
+                container.appendChild(sectionDiv);
+            }
+
+            if (hasFMC && !fmcSectionAdded) {
+                const fmcRows = [];
+                const fmcAggregator = new Map();
+                
+                const regionSelect = document.getElementById("RegionDostavki");
+                if (regionSelect && regionSelect.value !== "нет") {
+                    const regCostEl = document.getElementById('cost-RegionDostavki-placeholder');
+                    let costDisplay = "";
+                    if(regCostEl && regCostEl.textContent) costDisplay = `<div>${regCostEl.textContent}</div>`;
+                    const descText = "Указана стоимость доставки на один адрес"; 
+                    fmcRows.push(`<tr><td style="width:70%"><div class="print-row-name">Регион доставки</div><div style="margin-top:4px; font-weight:400; color:#555; font-size:11px;">${regionSelect.value}</div><div class="print-row-desc">${descText}</div></td><td style="width:30%"><div class="print-row-value">${costDisplay}</div></td></tr>`);
+                }
+
+                const bundleDivs = document.querySelectorAll('.fmc-subgroup');
+                bundleDivs.forEach(bundle => {
+                    const id = bundle.getAttribute('data-index');
+                    const countInput = document.getElementById('KolvoFMC_' + id);
+                    const tariffSelect = document.getElementById('TarifFMC_' + id);
+                    
+                    if(countInput && tariffSelect) {
+                        const count = parseInt(countInput.value) || 0;
+                        const tariffName = tariffSelect.value;
+                        
+                        if (count > 0 && tariffName !== 'нет') {
+                            let pricePerSim = 0;
+                            switch (tariffName) {
+                                case "200 минут, 1Гб интернета": pricePerSim = 790; break;
+                                case "600 минут, 5Гб интернета": pricePerSim = 1290; break;
+                                case "800 минут, 10Гб интернета": pricePerSim = 1990; break;
+                                case "2000 минут, 20Гб интернета": pricePerSim = 4490; break;
+                                case "15 минут, 0,2Гб интернета": pricePerSim = 390; break;
+                            }
+                            const totalCost = pricePerSim * count;
+
+                            if (!fmcAggregator.has(tariffName)) {
+                                fmcAggregator.set(tariffName, { count: 0, cost: 0 });
+                            }
+                            const entry = fmcAggregator.get(tariffName);
+                            entry.count += count;
+                            entry.cost += totalCost;
+                        }
+                    }
+                });
+
+                fmcAggregator.forEach((data, tariffName) => {
+                    const costFormatted = data.cost.toLocaleString('ru-RU') + ' ₽ / мес';
+                    fmcRows.push(`<tr>
+                        <td style="width:70%">
+                            <div class="print-row-name">Количество сим карт <span style="font-weight:400; color:#555;">(${data.count} шт.)</span></div>
+                            <div style="font-size: 11px; color: #777; margin-top: 4px;">Тариф: ${tariffName}</div>
+                        </td>
+                        <td style="width:30%; vertical-align:middle;">
+                            <div class="print-row-value"><div class="print-row-value">${costFormatted}</div></div>
+                        </td>
+                    </tr>`);
+                });
+
+                if (fmcRows.length > 0) {
+                    const fmcSectionDiv = document.createElement('div');
+                    fmcSectionDiv.className = 'print-section';
+                    fmcSectionDiv.innerHTML = `<div class="print-section-title">Мобильная связь (FMC)</div><table class="print-table"><tbody>${fmcRows.join('')}</tbody></table>`;
+                    container.appendChild(fmcSectionDiv);
+                    fmcSectionAdded = true;
+                }
+            }
+        });
+
+        document.getElementById('print-total-monthly').textContent = document.getElementById('total-monthly').textContent + " ₽ / мес";
+        document.getElementById('print-total-minimal').textContent = document.getElementById('total-minimal').textContent;
+        document.getElementById('print-total-connection').textContent = document.getElementById('total-connection').textContent;
+        
+        let deliveryText = document.getElementById('total-delivery').textContent;
+        const regionVal = document.getElementById("RegionDostavki").value;
+        if (deliveryText === "0 ₽" && regionVal !== "нет") {
+            deliveryText = "бесплатно";
+        }
+        document.getElementById('print-total-delivery').textContent = deliveryText;
+
+        document.getElementById('print-total-guarantee').textContent = document.getElementById('total-guarantee').textContent;
+        
+        ['print-total-minimal', 'print-total-connection', 'print-total-delivery', 'print-total-guarantee'].forEach(id => {
+            const el = document.getElementById(id);
+            const row = el.closest('.print-total-row');
+            if(el.textContent.trim() === "0 ₽" || el.textContent.trim() === "0 ₽ / мес") row.style.display = 'none';
+            else row.style.display = 'flex';
+        });
+
+        const isWebApp = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData && window.Telegram.WebApp.initData.length > 0);
+        const isMobile = window.matchMedia('(max-width: 900px)').matches;
+
+        if (isWebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            
+            const userId = tg.initDataUnsafe?.user?.id;
+            const initData = tg.initData;
+
+            if (!userId || !initData) {
+                showToast("error", "Ошибка", "Перезапустите бота.");
+                return;
+            }
+
+            showToast("loading", "Генерация...", "Формируем PDF и отправляем в чат.", 0);
+
+            try {
+                const printContent = document.getElementById('print-area').innerHTML;
+                const styles = document.querySelector('style').innerHTML;
+
+                const response = await fetch(SERVER_URL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        htmlContent: printContent,
+                        cssContent: styles,
+                        userId: userId,
+                        initData: initData
+                    })
+                });
+
+                if (response.ok) {
+                    showToast("success", "Готово!", "Расчет успешно отправлен вам в Telegram.", 0);
+                } else {
+                    const errorData = await response.json();
+                    showToast("error", "Ошибка сервера", errorData.error || "Не удалось отправить расчет.");
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("error", "Ошибка сети", e.message);
+            }
+
+        } else if (isMobile) {
+            showToast(
+                "loading",
+                "Расчет сформирован.", 
+                "Если скачивание PDF файла не началось — значит приложение блокирует его.<br>Нажмите <b>•••</b> сверху &rarr; <b>Открыть в браузере</b>.", 
+                0 
+            );
+
+            const element = document.getElementById('print-area');
+            document.body.classList.add('pdf-mode');
+            window.scrollTo(0, 0);
+            
+            const opt = {
+              margin:       5,
+              filename:     'UIS - расчет стоимости.pdf',
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollY: 0, scrollX: 0, windowWidth: 800 },
+              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+              pagebreak:    { mode: ['css', 'legacy'] } 
+            };
+
+            html2pdf().set(opt).from(element).save().then(function(){
+                document.body.classList.remove('pdf-mode');
+            }).catch(err => {
+                document.body.classList.remove('pdf-mode');
+            });
+
+        } else {
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }
+    }
+
+    /* --- BUSINESS LOGIC --- */
 
     function resetForm() {
-  // Сброс числовых полей
-  document.querySelectorAll('input[type="number"]').forEach(input => {
-    input.value = 0;
-  });
+        document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
+            if(!input.disabled && !input.id.startsWith("mgr")) input.value = 0;
+        });
+        document.querySelectorAll('input[type="checkbox"]').forEach(box => {
+            box.checked = false;
+        });
+        document.querySelectorAll('select').forEach(select => {
+            select.selectedIndex = 0;
+            updateSelectTrigger(select.id);
+        });
+        const vsego = document.getElementById("NomeraVATSVsego");
+        if (vsego) vsego.value = 0;
 
-  // Сброс чекбоксов
-  document.querySelectorAll('input[type="checkbox"]').forEach(box => {
-    box.checked = false;
-  });
-
-  // Сброс списков (select)
-  document.querySelectorAll('select').forEach(select => {
-    select.selectedIndex = 0;
-  });
-
-  // Сброс итогового поля NomeraVATSVsego
-  const vsego = document.getElementById("NomeraVATSVsego");
-  if (vsego) vsego.value = 0;
-
-  // Очистка каскадной очереди
-  if (typeof manualChanges !== 'undefined') manualChanges.clear();
-
-  // Обновить итоги
-  updateTotals()
-
-}
-
-
-    function exportPDF() {
-      // Будет реализовано позже
-      alert("Экспорт в PDF будет добавлен позже");
+        if (typeof manualChanges !== 'undefined') manualChanges.clear();
+        
+        clearFmcBundles();
+        
+        updateTotals();
     }
-	function handleEnter(e) {
-  if (e.key === 'Enter') {
-    const inputs = [...document.querySelectorAll('input[type="number"], select')];
-    const index = inputs.indexOf(e.target);
-    if (index >= 0 && index < inputs.length - 1) {
-      inputs[index + 1].focus();
-    }
-  }
-}
-  // 👇 Вызывается при изменении любого поля
-  document.addEventListener('input', updateTotals);
-  document.addEventListener('change', updateTotals);
 
-  function parseVal(id) {
-    const el = document.getElementById(id);
-    if (!el) return 0;
-    const val = el.value || el.textContent;
-    const num = parseFloat(val.toString().replace(/[^\d.]/g, ''));
-    return isNaN(num) ? 0 : num;
-  }
-const formulaMap = {
-  VATS: {
-    cost: () => getCheckbox("VATS") ? 1200 : 0,
-  },
-  VATSPRO: {
-    cost: () => getCheckbox("VATSPRO") ? 2200 : 0,
-  },
-  KolvoSotrudnikovVATS: {
-    limit: () => {
-      const val = getNumber("KolvoSotrudnikovVATS");
-      const vatspro = getCheckbox("VATSPRO");
-      return val < 4 ? 0 : (val - 3) * (vatspro ? 200 : 120);
+    function parseVal(id) {
+        const el = document.getElementById(id);
+        if (!el) return 0;
+        const val = el.value || el.textContent;
+        const num = parseFloat(val.toString().replace(/[^\d.]/g, ''));
+        return isNaN(num) ? 0 : num;
     }
-  },
-DlitelnostHraneniyaVATS: {
-  limit: () => {
-    const ar = getSelect("DlitelnostHraneniyaAR");
-    const vats = getSelect("DlitelnostHraneniyaVATS");
-    const price = {
-      "1 месяц": 500,
-      "3 месяца": 1000,
-      "6 месяцев": 1500,
-      "1 год": 3000,
-      "2 года": 5000,
-      "4 года": 7000,
+
+    function getCheckbox(id) { return document.getElementById(id)?.checked ?? false; }
+    function getNumber(id) {
+        const val = parseFloat(document.getElementById(id)?.value ?? 0);
+        return isNaN(val) ? 0 : val;
+    }
+    function getSelect(id) { return document.getElementById(id)?.value ?? ""; }
+
+    const formulaMap = {
+        VATS: { cost: () => getCheckbox("VATS") ? 1200 : 0 },
+        VATSPRO: { cost: () => getCheckbox("VATSPRO") ? 2200 : 0 },
+        KolvoSotrudnikovVATS: {
+            limit: () => {
+                const val = getNumber("KolvoSotrudnikovVATS");
+                const vatspro = getCheckbox("VATSPRO");
+                return val < 4 ? 0 : (val - 3) * (vatspro ? 200 : 120);
+            }
+        },
+        DlitelnostHraneniyaVATS: {
+            limit: () => {
+                const ar = getSelect("DlitelnostHraneniyaAR");
+                const vats = getSelect("DlitelnostHraneniyaVATS");
+                const price = { "1 месяц": 500, "3 месяца": 1000, "6 месяцев": 1500, "1 год": 3000, "2 года": 5000, "4 года": 7000 };
+                if (!vats || vats === "0") return 0;
+                if (!ar || ar === "0") return price[vats] || 0;
+                if ((price[ar] || 0) > (price[vats] || 0)) return "учтено в KT";
+                return price[vats] || 0;
+            }
+        },
+        LiniyGrupovogoVizova: {
+            limit: () => {
+                const val = getNumber("LiniyGrupovogoVizova");
+                if (val < 4) return 0;
+                if (val < 51) return (val - 3) * 190;
+                return "уменьшите до 50";
+            }
+        },
+        LiniyIshodyashihZvonkov: {
+            limit: () => {
+                const val = getNumber("LiniyIshodyashihZvonkov");
+                if (val < 31) return 0;
+                if (val < 101) return (val - 30) * 190;
+                return "уменьшите до 100";
+            }
+        },
+        KolvoSIPTrankov: { cost: () => { const val = getNumber("KolvoSIPTrankov"); return val < 1501 ? val * 400 : "уменьшите до 1500"; } },
+        KanalnostSIPTrankov: { limit: () => { const val = getNumber("KanalnostSIPTrankov"); if (val < 31) return 0; if (val < 61) return 1000; if (val < 91) return 1500; if (val < 181) return 3000; return 0; } },
+        KolvoSIPURI: { cost: () => { const val = getNumber("KolvoSIPURI"); return val < 1501 ? val * 100 : "уменьшите до 1500"; } },
+        KolvoSIPAkkauntov: { cost: () => { const val = getNumber("KolvoSIPAkkauntov"); return val < 1501 ? val * 300 : "уменьшите до 1500"; } },
+        KanalnostSIPAkkauntov: { limit: () => { const val = getNumber("KanalnostSIPAkkauntov"); if (val < 31) return 0; if (val < 61) return 1000; if (val < 91) return 1500; if (val < 181) return 3000; return 0; } },
+        NomeraVATS: { cost: () => getNumber("NomeraVATS") * 300 },
+        NomeraVATS8800: { cost: () => getNumber("NomeraVATS8800") * 590 },
+        KolvoSvoihNomerov: { cost: () => { const val = getNumber("KolvoSvoihNomerov"); if (val < 1) return 0; if (val < 11) return val * 200; return 2000 + ((val - 10) * 100); } },
+        
+        // --- ИСПРАВЛЕНИЕ 5 (из ТЗ): Считаем только расширение лимита ---
+        NomeraVATSVsego: { limit: () => { const val = getNumber("NomeraVATSVsego"); return val < 4 ? 0 : (val - 3) * 100; } },
+        
+        KolvoFMC: { cost: () => 0 },
+        OMNI: { cost: () => getCheckbox("OMNI") ? 2600 : 0 },
+        KolvoSotrudnikovOMNI: {
+            limit: () => {
+                const val = getNumber("KolvoSotrudnikovOMNI");
+                if (val < 4) return 0;
+                if (val < 21) return (val - 3) * 590;
+                if (val < 31) return (val - 3) * 540;
+                if (val < 41) return (val - 3) * 490;
+                if (val < 101) return (val - 3) * 440;
+                if (val < 201) return (val - 3) * 390;
+                if (val < 1001) return (val - 3) * 340;
+                if (val < 10001) return (val - 3) * 290;
+                return "уменьшите до 10000";
+            }
+        },
+        KolvoWA: { limit: () => getNumber("KolvoWA") * 990 },
+        KolvoWABA: { cost: () => getNumber("KolvoWABA") > 0 ? 4000 : 0, limit: () => getNumber("KolvoWABA") * 5000 },
+        TgVkAvito: { cost: () => getCheckbox("TgVkAvito") ? "вкл" : 0 },
+        OMNIKnopka: { cost: () => getCheckbox("OMNIKnopka") ? "вкл" : 0 },
+        AR: { cost: () => getCheckbox("AR") ? 2000 : 0 },
+        KolvoSaitov: { limit: () => getNumber("KolvoSaitov") ? "вкл" : 0 },
+        KolvoPolzovatelskihIstochnikov: { limit: () => { const val = getNumber("KolvoPolzovatelskihIstochnikov"); if (val === 250) return 1000; if (val === 500) return 2000; if (val === 5000) return 3000; return 0; } },
+        PaketTrafika: {
+            limit: () => {
+                const val = document.getElementById("PaketTrafika")?.value || "";
+                const num = parseInt(val);
+                if (val === "безлимит") return 50000;
+                if (num === 0 || num === 10000) return 0;
+                if (num === 20000) return 1000;
+                if (num === 50000) return 3500;
+                if (num === 100000) return 7500;
+                if (num === 200000) return 15000;
+                if (num === 500000) return 30000;
+                return 50000;
+            }
+        },
+        KT: { cost: () => getCheckbox("KT") ? 1500 : 0 },
+        NomeraKT: { cost: () => getNumber("NomeraKT") * 300 },
+        NomeraKT8800: { cost: () => getNumber("NomeraKT8800") * 590 },
+        DlitelnostHraneniyaAR: {
+            limit: () => {
+                const values = { "0": 0, "1 месяц": 500, "3 месяца": 1000, "6 месяцев": 1500, "1 год": 3000, "2 года": 5000, "4 года": 7000 };
+                const vats = document.getElementById("DlitelnostHraneniyaVATS")?.value || "";
+                const ar = document.getElementById("DlitelnostHraneniyaAR")?.value || "";
+                if (ar === "0") return 0;
+                const vatsVal = values[vats] ?? 0;
+                const arVal = values[ar] ?? 0;
+                return vatsVal >= arVal ? "учтено в ВАТС" : arVal;
+            }
+        },
+        EmailTreking: { cost: () => document.getElementById("EmailTreking")?.value !== "нет" ? 2000 : 0, limit: () => document.getElementById("EmailTreking")?.value === "больше 100 шт." ? 1000 : 0 },
+        KonstruktorOtchetov: { cost: () => getCheckbox("KonstruktorOtchetov") ? 4000 : 0 },
+        AnalitikaProdaj: { cost: () => getCheckbox("AnalitikaProdaj") ? 3000 : 0 },
+        IntegraciyaSVidjetami: { cost: () => getCheckbox("IntegraciyaSVidjetami") ? 2000 : 0 },
+        AmoBitrix: { cost: () => getCheckbox("AmoBitrix") ? 1500 : 0 },
+        IntegraciyaOtraslevie: { cost: () => getCheckbox("IntegraciyaOtraslevie") ? 2000 : 0 },
+        UvedomlenieOSobitiyah: { cost: () => getCheckbox("UvedomlenieOSobitiyah") ? 800 : 0 },
+        VneshnieATS: { cost: () => getCheckbox("VneshnieATS") ? 3000 : 0 },
+        SpasenieKommunikatsiy: { cost: () => getCheckbox("SpasenieKommunikatsiy") ? 1600 : 0 },
+        AvtoperezvonPoZayavkam: { cost: () => getCheckbox("AvtoperezvonPoZayavkam") ? 1600 : 0 },
+        VezdeKakDoma: { cost: () => getCheckbox("VezdeKakDoma") ? 2000 : 0 }
     };
-    if (!vats || vats === "0") return 0;
-    if (!ar || ar === "0") return price[vats] || 0;
-    if ((price[ar] || 0) > (price[vats] || 0)) return "учтено в KT";
-    return price[vats] || 0;
-  }
-},
-LiniyGrupovogoVizova: {
-  limit: () => {
-    const val = getNumber("LiniyGrupovogoVizova");
-    if (val < 4) return 0;
-    if (val < 51) return (val - 3) * 190;
-    return "уменьшите до 50";
-  }
-},
-LiniyIshodyashihZvonkov: {
-  limit: () => {
-    const val = getNumber("LiniyIshodyashihZvonkov");
-    if (val < 31) return 0;
-    if (val < 101) return (val - 30) * 190;
-    return "уменьшите до 100";
-  }
-},
-KolvoSIPTrankov: {
-  cost: () => {
-    const val = getNumber("KolvoSIPTrankov");
-    if (val < 1501) return val * 400;
-    return "уменьшите до 1500";
-  }
-},
-KanalnostSIPTrankov: {
-  limit: () => {
-    const val = getNumber("KanalnostSIPTrankov");
-    if (val < 31) return 0;
-    if (val < 61) return 1000;
-    if (val < 91) return 1500;
-    if (val < 181) return 3000;
-    return 0;
-  }
-},
-KolvoSIPURI: {
-  cost: () => {
-    const val = getNumber("KolvoSIPURI");
-    if (val < 1501) return val * 100;
-    return "уменьшите до 1500";
-  }
-},
-KolvoSIPAkkauntov: {
-  cost: () => {
-    const val = getNumber("KolvoSIPAkkauntov");
-    if (val < 1501) return val * 300;
-    return "уменьшите до 1500";
-  }
-},
-KanalnostSIPAkkauntov: {
-  limit: () => {
-    const val = getNumber("KanalnostSIPAkkauntov");
-    if (val < 31) return 0;
-    if (val < 61) return 1000;
-    if (val < 91) return 1500;
-    if (val < 181) return 3000;
-    return 0;
-  }
-},
-NomeraVATS: {
-  cost: () => getNumber("NomeraVATS") * 300
-},
-NomeraVATS8800: {
-  cost: () => getNumber("NomeraVATS8800") * 590
-},
-KolvoSvoihNomerov: {
-  cost: () => {
-    const val = getNumber("KolvoSvoihNomerov");
-    if (val < 1) return 0;
-    if (val < 11) return val* 200;
-    return 2000 + ((val - 10) * 100);
-  }
-},
-KolvoFMC: {
-  cost: () => {
-    const tarif = document.getElementById("TarifFMC")?.value || "";
-    const count = getNumber("KolvoFMC");
-    let price = 0;
-    switch (tarif) {
-      case "200 минут, 1Гб интернета": price = 790; break;
-      case "600 минут, 5Гб интернета": price = 1290; break;
-      case "800 минут, 10Гб интернета": price = 1990; break;
-      case "2000 минут, 20Гб интернета": price = 4490; break;
-      case "15 минут, 0,2Гб интернета": price = 390; break;
-    }
-    return price * count;
-  }
-},
-NomeraVATSVsego: {
-  limit: () => {
-    const val = getNumber("NomeraVATSVsego");
-    return val < 4 ? 0 : (val - 3) * 100;
-  }
-},
-OMNI: {
-  cost: () => getCheckbox("OMNI") ? 2600 : 0
-},
-KolvoSotrudnikovOMNI: {
-  limit: () => {
-    const val = getNumber("KolvoSotrudnikovOMNI");
-    if (val < 4) return 0;
-    if (val < 21) return (val - 3) * 590;
-    if (val < 31) return (val - 3) * 540;
-    if (val < 41) return (val - 3) * 490;
-    if (val < 101) return (val - 3) * 440;
-    if (val < 201) return (val - 3) * 390;
-    if (val < 1001) return (val - 3) * 340;
-    if (val < 10001) return (val - 3) * 290;
-    return "уменьшите до 10000";
-  }
-},
-KolvoWA: {
-  limit: () => getNumber("KolvoWA") * 990
-},
-KolvoWABA: {
-  cost: () => getNumber("KolvoWABA") > 0 ? 4000 : 0,
-  limit: () => getNumber("KolvoWABA") * 5000
-},
-TgVkAvito: {
-  cost: () => getCheckbox("TgVkAvito") ? "безлимит" : 0
-},
-OMNIKnopka: {
-  cost: () => getCheckbox("OMNIKnopka") ? "безлимит" : 0
-},
-AR: {
-  cost: () => getCheckbox("AR") ? 2000 : 0
-},
-KolvoSaitov: {
-	limit: () => getNumber("KolvoSaitov") ? "безлимит" : 0
-//  limit: () => {
-//    const val = getNumber("KolvoSaitov");
-//    if (val < 2) return 0;
-//    if (val < 6) return 0;
-//    if (val < 21) return 0;
-//    if (val < 1501) return 0;
-//    return "уменьшите до 1500";
-//  }
-},
-KolvoPolzovatelskihIstochnikov: {
-  limit: () => {
-    const val = getNumber("KolvoPolzovatelskihIstochnikov");
-    if (val === 250) return 1000;
-    if (val === 500) return 2000;
-    if (val === 5000) return 3000;
-    return 0;
-  }
-},
-PaketTrafika: {
-  limit: () => {
-    const val = document.getElementById("PaketTrafika")?.value || "";
-    const num = parseInt(val);
-    if (val === "безлимит") return 50000;
-    if (num === 0 || num === 10000) return 0;
-    if (num === 20000) return 1000;
-    if (num === 50000) return 3500;
-    if (num === 100000) return 7500;
-    if (num === 200000) return 15000;
-    if (num === 500000) return 30000;
-    return 50000;
-  }
-},
-KT: {
-  cost: () => getCheckbox("KT") ? 1500 : 0
-},
-NomeraKT: {
-  cost: () => getNumber("NomeraKT") * 300
-},
-NomeraKT8800: {
-  cost: () => getNumber("NomeraKT8800") * 590
-},
-DlitelnostHraneniyaAR: {
-  limit: () => {
-    const values = {
-      "0": 0,
-      "1 месяц": 500,
-      "3 месяца": 1000,
-      "6 месяцев": 1500,
-      "1 год": 3000,
-      "2 года": 5000,
-      "4 года": 7000
-    };
-    const vats = document.getElementById("DlitelnostHraneniyaVATS")?.value || "";
-    const ar = document.getElementById("DlitelnostHraneniyaAR")?.value || "";
-    
-    if (ar === "0") return 0;
-    
-    const vatsVal = values[vats] ?? 0;
-    const arVal = values[ar] ?? 0;
 
-    return vatsVal >= arVal ? "учтено в ВАТС" : arVal;
-  }
-},
-EmailTreking: {
-  cost: () => {
-    const val = document.getElementById("EmailTreking")?.value || "";
-    return val !== "нет" ? 2000 : 0;
-  },
-  limit: () => {
-    const val = document.getElementById("EmailTreking")?.value || "";
-    return val === "больше 100 шт." ? 1000 : 0;
-  }
-},
-KonstruktorOtchetov: {
-  cost: () => getCheckbox("KonstruktorOtchetov") ? 4000 : 0
-},
-AnalitikaProdaj: {
-  cost: () => getCheckbox("AnalitikaProdaj") ? 3000 : 0
-},
-IntegraciyaSVidjetami: {
-  cost: () => getCheckbox("IntegraciyaSVidjetami") ? 2000 : 0
-},
-AmoBitrix: {
-  cost: () => getCheckbox("AmoBitrix") ? 1500 : 0
-},
-IntegraciyaOtraslevie: {
-  cost: () => getCheckbox("IntegraciyaOtraslevie") ? 2000 : 0
-},
-UvedomlenieOSobitiyah: {
-  cost: () => getCheckbox("UvedomlenieOSobitiyah") ? 800 : 0
-},
-VneshnieATS: {
-  cost: () => getCheckbox("VneshnieATS") ? 3000 : 0
-},
-SpasenieKommunikatsiy: {
-  cost: () => getCheckbox("SpasenieKommunikatsiy") ? 1600 : 0
-},
-AvtoperezvonPoZayavkam: {
-  cost: () => getCheckbox("AvtoperezvonPoZayavkam") ? 1600 : 0
-},
-VezdeKakDoma: {
-  cost: () => getCheckbox("VezdeKakDoma") ? 2000 : 0
-}
-};
-const manualChanges = new Set();
-let cascadeQueue = [];
-let isProcessing = false;
-
-function runCascade(startField) {
-  if (isProcessing) {
-    manualChanges.add(startField);
-    return;
-  }
-
-  cascadeQueue = [startField];
-  isProcessing = true;
-
-  let depth = 0;
-  const maxDepth = 3;
-
-  const context = {
-    set: (id, value) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const current = el.type === "checkbox" ? el.checked : el.value;
-      const changedByUser = manualChanges.has(id);
-      const isSame = current == value;
-
-      if (isSame || changedByUser) return;
-
-      if (el.type === "checkbox") el.checked = value;
-      else el.value = value;
-
-      cascadeQueue.push(id);
-    },
-    select: (id, value) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const changedByUser = manualChanges.has(id);
-      const isSame = el.value === value;
-      if (isSame || changedByUser) return;
-      el.value = value;
-      cascadeQueue.push(id);
-    }
-  };
-
-  while (cascadeQueue.length && depth < maxDepth) {
-    const current = cascadeQueue.shift();
-    const rule = rules[current];
-    if (rule) rule(context);
-    depth++;
-  }
-
-  isProcessing = false;
-  manualChanges.clear();
-  updateTotals();
-}
-
-  function updateTotals() {
-  Object.entries(formulaMap).forEach(([id, formula]) => {
-    const costEl = document.getElementById(`cost-${id}`);
-    const limitEl = document.getElementById(`limit-${id}`);
-    const inputEl = document.getElementById(id);
-
-    // === COST ===
-    if (costEl) {
-      if (formula.cost) {
-        const val = formula.cost();
-        costEl.textContent = (typeof val === "number") ? val.toFixed(0) : (val || "");
-      } else {
-        costEl.textContent = "";
-      }
-    }
-
-    // === LIMIT ===
-    if (limitEl) {
-      if (formula.limit) {
-        const val = formula.limit();
-        limitEl.textContent = (typeof val === "number") ? val.toFixed(0) : (val || "");
-      } else {
-        limitEl.textContent = "";
-      }
-    }
-  });
-
-
-
-    // 1. Ежемесячный платеж (сумма всех cost- и limit-)
-    let total = 0;
-    document.querySelectorAll('[id^="cost-"], [id^="limit-"]').forEach(el => {
-      const txt = el.textContent?.trim() || "";
-      if (txt.toLowerCase().includes("уменьшите") || txt === "" || txt === "0") return;
-      const val = parseFloat(txt.replace(/[^\d.]/g, ''));
-      if (!isNaN(val)) total += val;
-
-    });
-    document.getElementById('total-monthly').textContent = total.toFixed(0);
-
-    // 2. Минимальный счёт за номера 8800
-    const nom8800 = parseVal("NomeraVATS8800") + parseVal("NomeraKT8800");
-    document.getElementById('total-minimal').textContent = (nom8800 * 700).toFixed(0);
-
-    // 3. Подключение номеров
-    const connect = parseVal("NomeraVATS") * 300 + parseVal("KolvoFMC") * 250;
-    document.getElementById('total-connection').textContent = connect.toFixed(0);
-
-    // 4. Доставка FMC
-    const region = (document.getElementById("RegionDostavki")?.value || "").trim();
-    let delivery = 0;
-    if (region === "Москва и мск. обл." || region === "Санкт-Петербург и лен. обл.") delivery = 500;
-    else if (region === "Центральная Россия, Поволжье") delivery = 750;
-    else if (region === "Юг, Урал, Сибирь") delivery = 1000;
-    else if (region === "Дальний Восток") delivery = 1300;
-    document.getElementById('total-delivery').textContent = delivery.toFixed(0);
-
-    // 5. Автоматический пересчёт NomeraVATSVsego
-    const sumAll = parseVal("NomeraVATS") + parseVal("NomeraVATS8800") + parseVal("KolvoFMC");
-    document.getElementById("NomeraVATSVsego").value = sumAll;
-
-	      // 6. Гарантийный платёж
-    const monthly = parseVal("total-monthly");
-    const minimal = parseVal("total-minimal");
-    const connection = parseVal("total-connection"); //нужно ли? 
-
-    const baseSum = monthly + minimal + connection;
-    const guarantee = baseSum > 0 ? (baseSum < 4000 ? 4000 : baseSum) : 0;
-    document.getElementById('total-guarantee').textContent = guarantee.toFixed(0);
-
-    const maxLimit = baseSum <= 10000
-      ? guarantee * 2
-      : guarantee * 1.7;
-
-    document.getElementById('tooltip-guarantee').textContent =
-      `Будет "заморожен" на счете как гарантия оплаты и возвращен или учтен при закрытии договора. ` +
-      `Максимальный порог кредитного лимита: ${maxLimit.toFixed(0)} руб.`;
-
-  }
-
-function getCheckbox(id) {
-  const el = document.getElementById(id);
-  return el?.checked ?? false;
-}
-
-function getNumber(id) {
-  const val = parseFloat(document.getElementById(id)?.value ?? 0);
-  return isNaN(val) ? 0 : val;
-}
-
-function getSelect(id) {
-  return document.getElementById(id)?.value ?? "";
-}
-// === КАСКАДНЫЕ ПРАВИЛА ===
-const rules = {
-  VATS: (context) => {
+    const rules = {
+      VATS: (context) => {
     const val = getCheckbox("VATS");
-    const prev = context.prev?.VATS;
-
     if (val === true) {
-      context.select("DlitelnostHraneniyaVATS", "1 неделя"); // выбрать "1 неделя"
-      if (getNumber("KolvoSotrudnikovVATS") < 3) context.set("KolvoSotrudnikovVATS", 3);
-      if (getNumber("LiniyGrupovogoVizova") < 3) context.set("LiniyGrupovogoVizova", 3);
-      if (getNumber("LiniyIshodyashihZvonkov") < 30) context.set("LiniyIshodyashihZvonkov", 30);
+        if (getSelect("DlitelnostHraneniyaVATS") === "0") context.select("DlitelnostHraneniyaVATS", "1 неделя");
+        
+        if (getNumber("KolvoSotrudnikovVATS") < 3) context.set("KolvoSotrudnikovVATS", 3);
+        if (getNumber("LiniyGrupovogoVizova") < 3) context.set("LiniyGrupovogoVizova", 3);
+        if (getNumber("LiniyIshodyashihZvonkov") < 30) context.set("LiniyIshodyashihZvonkov", 30);
     } else {
-      context.set("KolvoSotrudnikovVATS", 0);
-      context.set("LiniyGrupovogoVizova", 0);
-      context.set("LiniyIshodyashihZvonkov", 0);
-      context.set("KolvoSIPTrankov", 0);
-      context.set("KolvoSIPURI", 0);
-      context.set("KolvoSIPAkkauntov", 0);
-      context.set("NomeraVATS", 0);
-      context.set("NomeraVATS8800", 0);
-      context.set("KolvoSvoihNomerov", 0);
-      context.set("KolvoFMC", 0);
+        // --- ИСПРАВЛЕНИЕ 5 (выключение ВАТС очищает FMC) ---
+        const fmcContainer = document.getElementById('fmc-bundles-container');
+        if(fmcContainer) fmcContainer.innerHTML = ''; // Очищаем DOM
+        fmcUniqueIdCounter = 0; // Сбрасываем счетчик, но это не обязательно, главное DOM
+        updateFmcLabels(); 
 
-      context.set("VATSPRO", false);
-      context.select("DlitelnostHraneniyaVATS", 0);
-      context.select("KanalnostSIPTrankov", 0);
-      context.select("KanalnostSIPAkkauntov", 0);
-      context.select("TarifFMC", "нет");
-      context.select("RegionDostavki", "нет");
-
-      context.set("VneshnieATS", false);
-      context.set("SpasenieKommunikatsiy", false);
-      context.set("AvtoperezvonPoZayavkam", false);
-      context.set("VezdeKakDoma", false);
-
-      if (!getCheckbox("OMNI") && !getCheckbox("AnalitikaProdaj")) {
-        context.set("AmoBitrix", false);
-      }
-
-      context.set("IntegraciyaOtraslevie", false);
-
-      if (
-        getCheckbox("UvedomlenieOSobitiyah") === true &&
-        !getCheckbox("OMNI") &&
-        !getCheckbox("AR")
-      ) {
-        context.set("UvedomlenieOSobitiyah", false);
-      }
-    }
-  },
-  VATSPRO: (context) => {
-    if (getCheckbox("VATSPRO") && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-  },
-  KolvoSotrudnikovVATS: (context) => {
-    const val = getNumber("KolvoSotrudnikovVATS");
-    if (val > 0 && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-
-    if (val > 0 && val < 3) {
-      context.set("KolvoSotrudnikovVATS", 3);
-    }
-
-    if (
-      val === 0 &&
-      getNumber("KolvoSIPTrankov") === 0 &&
-      getNumber("KolvoSIPURI") === 0 &&
-      getNumber("KolvoSIPAkkauntov") === 0 &&
-      getCheckbox("VATS") === true
-    ) {
-      context.set("VATS", false);
-    }
-  },
-  DlitelnostHraneniyaVATS: (context) => {
-    const val = document.getElementById("DlitelnostHraneniyaVATS")?.value;
-    if (val !== "0" && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-    if (val === "0" && getCheckbox("VATS")) {
-      context.select("DlitelnostHraneniyaVATS", "1 неделя");
-    }
-  },
-  LiniyGrupovogoVizova: (context) => {
-    const val = getNumber("LiniyGrupovogoVizova");
-    if (val > 0 && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-    if (val >= 0 && val < 3 && getCheckbox("VATS")) {
-      context.set("LiniyGrupovogoVizova", 3);
-    }
-  },
-  LiniyIshodyashihZvonkov: (context) => {
-    const val = getNumber("LiniyIshodyashihZvonkov");
-    if (val > 0 && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-    if (val >= 0 && val < 30 && getCheckbox("VATS")) {
-      context.set("LiniyIshodyashihZvonkov", 30);
-    }
-  },
-  KolvoSIPTrankov: (context) => {
-    const val = getNumber("KolvoSIPTrankov");
-    const kanalnost = document.getElementById("KanalnostSIPTrankov")?.value;
-    if (val > 0) {
-      if (!getCheckbox("VATS")) {
-        context.set("VATS", true);
-      }
-      if (parseInt(kanalnost, 10) < 30) {
-        context.select("KanalnostSIPTrankov", "30");
-      }
-    }
-    if (
-      val === 0 &&
-      getNumber("KolvoSotrudnikovVATS") === 0 &&
-      getNumber("KolvoSIPURI") === 0 &&
-      getNumber("KolvoSIPAkkauntov") === 0 &&
-      getCheckbox("VATS") === true
-    ) {
-      context.set("VATS", false);
-    }
-    if (val === 0 && kanalnost !== "0") {
-      context.select("KanalnostSIPTrankov", "0");
-    }
-  },
-  KanalnostSIPTrankov: (context) => {
-    const val = document.getElementById("KanalnostSIPTrankov")?.value;
-    if (val !== "0") {
-      if (!getCheckbox("VATS")) {
-        context.set("VATS", true);
-      }
-      if (getNumber("KolvoSIPTrankov") === 0) {
-        context.set("KolvoSIPTrankov", 1);
-      }
-    } else {
-      if (getNumber("KolvoSIPTrankov") !== 0) {
+        context.set("KolvoSotrudnikovVATS", 0);
+        context.set("LiniyGrupovogoVizova", 0);
+        context.set("LiniyIshodyashihZvonkov", 0);
         context.set("KolvoSIPTrankov", 0);
-      }
-    }
-  },
-  KolvoSIPURI: (context) => {
-    const val = getNumber("KolvoSIPURI");
-    if (val > 0 && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-    if (
-      val === 0 &&
-      getNumber("KolvoSotrudnikovVATS") === 0 &&
-      getNumber("KolvoSIPTrankov") === 0 &&
-      getNumber("KolvoSIPAkkauntov") === 0 &&
-      getCheckbox("VATS") === true
-    ) {
-      context.set("VATS", false);
-    }
-  },
-  KolvoSIPAkkauntov: (context) => {
-    const val = getNumber("KolvoSIPAkkauntov");
-    const kanalnost = document.getElementById("KanalnostSIPAkkauntov")?.value;
-    if (val > 0) {
-      if (!getCheckbox("VATS")) {
-        context.set("VATS", true);
-      }
-      if (parseInt(kanalnost, 10) < 30) {
-        context.select("KanalnostSIPAkkauntov", "30");
-      }
-    }
-    if (
-      val === 0 &&
-      getNumber("KolvoSotrudnikovVATS") === 0 &&
-      getNumber("KolvoSIPURI") === 0 &&
-      getNumber("KolvoSIPTrankov") === 0 &&
-      getCheckbox("VATS") === true
-    ) {
-      context.set("VATS", false);
-    }
-    if (val === 0 && kanalnost !== "0") {
-      context.select("KanalnostSIPAkkauntov", "0");
-    }
-  },
-  KanalnostSIPAkkauntov: (context) => {
-    const val = document.getElementById("KanalnostSIPAkkauntov")?.value;
-    if (val !== "0") {
-      if (!getCheckbox("VATS")) {
-        context.set("VATS", true);
-      }
-      if (getNumber("KolvoSIPAkkauntov") === 0) {
-        context.set("KolvoSIPAkkauntov", 1);
-      }
-    } else {
-      if (getNumber("KolvoSIPAkkauntov") !== 0) {
+        context.set("KolvoSIPURI", 0);
         context.set("KolvoSIPAkkauntov", 0);
-      }
-    }
-  },
-  NomeraVATS: (context) => {
-    const val = getNumber("NomeraVATS");
-    if (val > 0 && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-  },
-  NomeraVATS8800: (context) => {
-    const val = getNumber("NomeraVATS8800");
-    if (val > 0 && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-  },
-  KolvoSvoihNomerov: (context) => {
-    const val = getNumber("KolvoSvoihNomerov");
-    if (val > 0 && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-  },
-  KolvoFMC: (context) => {
-    const val = getNumber("KolvoFMC");
-    if (val > 0) {
-      if (!getCheckbox("VATS")) {
-        context.set("VATS", true);
-      }
-      const tarif = document.getElementById("TarifFMC")?.value;
-      if (tarif === "нет") {
-        const options = document.getElementById("TarifFMC")?.options;
-        if (options?.length > 1) {
-          context.select("TarifFMC", options[1].value);
-        }
-      }
-    } else {
-      if (document.getElementById("TarifFMC")?.value !== "нет") {
-        context.select("TarifFMC", "нет");
-      }
-      if (document.getElementById("RegionDostavki")?.value !== "нет") {
-        context.select("RegionDostavki", "нет");
-      }
-    }
-  },
-  TarifFMC: (context) => {
-    const val = document.getElementById("TarifFMC")?.value;
-    if (val && val !== "нет") {
-      if (!getCheckbox("VATS")) {
-        context.set("VATS", true);
-      }
-      if (getNumber("KolvoFMC") === 0) {
-        context.set("KolvoFMC", 1);
-      }
-    } else {
-      if (getNumber("KolvoFMC") !== 0) {
-        context.set("KolvoFMC", 0);
-      }
-      if (document.getElementById("RegionDostavki")?.value !== "нет") {
-        context.select("RegionDostavki", "нет");
-      }
-    }
-  },
-  RegionDostavki: (context) => {
-    const val = document.getElementById("RegionDostavki")?.value;
-    if (val && val !== "нет") {
-      if (!getCheckbox("VATS")) {
-        context.set("VATS", true);
-      }
-      if (getNumber("KolvoFMC") === 0) {
-        context.set("KolvoFMC", 1);
-      }
-      const tarif = document.getElementById("TarifFMC")?.value;
-      if (tarif === "нет") {
-        const options = document.getElementById("TarifFMC")?.options;
-        if (options?.length > 1) {
-          context.select("TarifFMC", options[1].value);
-        }
-      }
-    }
-  },
-  OMNI: (context) => {
-    const val = getCheckbox("OMNI");
-    if (val === true) {
-      if (getNumber("KolvoSotrudnikovOMNI") < 3) {
-        context.set("KolvoSotrudnikovOMNI", 3);
-      }
-      if (!getCheckbox("TgVkAvito")) {
-        context.set("TgVkAvito", true);
-      }
-      if (!getCheckbox("OMNIKnopka")) {
-        context.set("OMNIKnopka", true);
-      }
-    } else {
-      context.set("KolvoSotrudnikovOMNI", 0);
-      context.set("KolvoWA", 0);
-      context.set("KolvoWABA", 0);
-      context.set("TgVkAvito", false);
-      context.set("OMNIKnopka", false);
+        context.set("NomeraVATS", 0);
+        context.set("NomeraVATS8800", 0);
+        context.set("KolvoSvoihNomerov", 0);
 
-      if (!getCheckbox("VATS") && !getCheckbox("AnalitikaProdaj")) {
-        context.set("AmoBitrix", false);
-      }
-if (!getCheckbox("VATS") && !getCheckbox("AR")) {
-    	context.set("UvedomlenieOSobitiyah", false);
-  	}
+        context.set("VATSPRO", false);
+        context.select("DlitelnostHraneniyaVATS", "0");
+        context.select("KanalnostSIPTrankov", "0");
+        context.select("KanalnostSIPAkkauntov", "0");
+        context.select("RegionDostavki", "нет");
+        
+        if (!getCheckbox("OMNI") && !getCheckbox("AnalitikaProdaj")) {
+            context.set("AmoBitrix", false);
+          }
+          if (!getCheckbox("OMNI") && !getCheckbox("AR")) {
+            context.set("UvedomlenieOSobitiyah", false);
+          }
     }
-  },
-  KolvoSotrudnikovOMNI: (context) => {
-    const val = getNumber("KolvoSotrudnikovOMNI");
-    if (val > 0) {
-      if (!getCheckbox("OMNI")) {
-        context.set("OMNI", true);
-      }
-      if (val < 3) {
-        context.set("KolvoSotrudnikovOMNI", 3);
-      }
-    }
-    if (val === 0 && getCheckbox("OMNI")) {
-      context.set("OMNI", false);
-    }
-  },
-  KolvoWA: (context) => {
-    if (getNumber("KolvoWA") > 0 && !getCheckbox("OMNI")) {
-      context.set("OMNI", true);
-    }
-  },
-  KolvoWABA: (context) => {
-    if (getNumber("KolvoWABA") > 0 && !getCheckbox("OMNI")) {
-      context.set("OMNI", true);
-    }
-  },
-  TgVkAvito: (context) => {
-    if (getCheckbox("TgVkAvito") && !getCheckbox("OMNI")) {
-      context.set("OMNI", true);
-    }
-  },
-  OMNIKnopka: (context) => {
-    if (getCheckbox("OMNIKnopka") && !getCheckbox("OMNI")) {
-      context.set("OMNI", true);
-    }
-  },
-  AR: (context) => {
-    if (getCheckbox("AR")) {
-      if (getNumber("KolvoSaitov") === 0) {
-        context.set("KolvoSaitov", 1);
-      }
-      context.select("KolvoPolzovatelskihIstochnikov", "50");
-      context.select("PaketTrafika", "10000");
-    } else {
-      context.set("KolvoSaitov", 0);
-      context.select("KolvoPolzovatelskihIstochnikov", "0");
-      context.select("PaketTrafika", "0");
-      context.select("EmailTreking", "нет");
-
-      context.set("KT", false);
-      context.set("NomeraKT", 0);
-      context.set("NomeraKT8800", 0);
-      context.set("DlitelnostHraneniyaAR", "0");
-      context.set("KonstruktorOtchetov", false);
-      context.set("AnalitikaProdaj", false);
-      context.set("IntegraciyaSVidjetami", false);
-      context.set("AvtoperezvonPoZayavkam", false);
-      if (!getCheckbox("VATS") && !getCheckbox("OMNI")) {
-        context.set("UvedomlenieOSobitiyah", false);
-      }
-    }
-  },
-  KolvoSaitov: (context) => {
-    if (getNumber("KolvoSaitov") > 0 && !getCheckbox("AR")) {
-      context.set("AR", true);
-    }
-  },
-KolvoPolzovatelskihIstochnikov: (context) => {
-  const val = document.getElementById("KolvoPolzovatelskihIstochnikov")?.value;
-  if (val && val !== "0" && !getCheckbox("AR")) {
-    context.set("AR", true);
-  }
 },
-  PaketTrafika: (context) => {
-    const val = document.getElementById("PaketTrafika")?.value;
-    if (val && val !== "0" && !getCheckbox("AR")) {
-      context.set("AR", true);
-    }
-  },
-  KT: (context) => {
-    const val = getCheckbox("KT");
-    if (val === true && !getCheckbox("AR")) {
-      context.set("AR", true);
-    }
-    if (val === false) {
-      context.set("NomeraKT", 0);
-      context.set("NomeraKT8800", 0);
-      context.select("DlitelnostHraneniyaAR", "0");
-    }
-  },
-  NomeraKT: (context) => {
-    if (getNumber("NomeraKT") > 0 && !getCheckbox("KT")) {
-      context.set("KT", true);
-    }
-  },
-  NomeraKT8800: (context) => {
-    if (getNumber("NomeraKT8800") > 0 && !getCheckbox("KT")) {
-      context.set("KT", true);
-    }
-  },
-  DlitelnostHraneniyaAR: (context) => {
-    const val = document.getElementById("DlitelnostHraneniyaAR")?.value;
-    if (val !== "0" && !getCheckbox("KT")) {
-      context.set("KT", true);
-    }
-    if (val === "0" && getCheckbox("KT")) {
-      context.select("DlitelnostHraneniyaAR", "1 неделя");
-    }
-  },
-  EmailTreking: (context) => {
-    const val = document.getElementById("EmailTreking")?.value;
-    if (val && val !== "нет" && !getCheckbox("AR")) {
-      context.set("AR", true);
-    }
-  },
-  KonstruktorOtchetov: (context) => {
-    if (getCheckbox("KonstruktorOtchetov") && !getCheckbox("AR")) {
-      context.set("AR", true);
-    }
-  },
-  AnalitikaProdaj: (context) => {
-    if (getCheckbox("AnalitikaProdaj")) {
-      if (!getCheckbox("AR")) {
-        context.set("AR", true);
-      }
-      if (!getCheckbox("AmoBitrix")) {
-        context.set("AmoBitrix", true);
-      }
-    } else {
-      if (!getCheckbox("OMNI") && !getCheckbox("VATS")) {
-        context.set("AmoBitrix", false);
-      }
-    }
-  },
-  IntegraciyaSVidjetami: (context) => {
-    if (getCheckbox("IntegraciyaSVidjetami") && !getCheckbox("AR")) {
-      context.set("AR", true);
-    }
-  },
-  IntegraciyaOtraslevie: (context) => {
-    if (getCheckbox("IntegraciyaOtraslevie") && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-  },
-  VneshnieATS: (context) => {
-    if (getCheckbox("VneshnieATS") && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-  },
-  AmoBitrix: (context) => {
-    if (getCheckbox("AmoBitrix")) {
-      if (!getCheckbox("VATS") && !getCheckbox("OMNI") && !getCheckbox("AnalitikaProdaj")) {
-        context.set("VATS", true);
-      }
-    } else {
-      if (getCheckbox("AnalitikaProdaj")) {
-        context.set("AnalitikaProdaj", false);
-      }
-    }
-  },
-  VezdeKakDoma: (context) => {
-    if (getCheckbox("VezdeKakDoma") && !getCheckbox("VATS")) {
-      context.set("VATS", true);
-    }
-  },
-  UvedomlenieOSobitiyah: (context) => {
-    if (getCheckbox("UvedomlenieOSobitiyah")) {
-      if (getCheckbox("SpasenieKommunikatsiy")) {
-        context.set("UvedomlenieOSobitiyah", false);
-      } else if (!getCheckbox("VATS") && !getCheckbox("OMNI") && !getCheckbox("AR")) {
-        context.set("VATS", true);
-      }
-    }
-  },
-  SpasenieKommunikatsiy: (context) => {
-    if (getCheckbox("SpasenieKommunikatsiy")) {
-	document.getElementById('UvedomlenieOSobitiyah').disabled = true;
-      if (!getCheckbox("VATS")) {
-        context.set("VATS", true);
-      }
-      if (getCheckbox("UvedomlenieOSobitiyah")) {
-        context.set("UvedomlenieOSobitiyah", false);
-      }
-    } else {document.getElementById('UvedomlenieOSobitiyah').disabled = false;}
-  },
-  AvtoperezvonPoZayavkam: (context) => {
-    if (getCheckbox("AvtoperezvonPoZayavkam")) {
-      if (!getCheckbox("VATS")) {
-        context.set("VATS", true);
-      }
-      if (!getCheckbox("AR")) {
-        context.set("AR", true);
-      }
-    }
-  },
+      VATSPRO: (context) => {
+        if (getCheckbox("VATSPRO") && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+      },
+      KolvoSotrudnikovVATS: (context) => {
+        const val = getNumber("KolvoSotrudnikovVATS");
+        if (val > 0 && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
 
-};
-document.getElementById("toggle-analytics").addEventListener("click", function () {
-  const block = document.getElementById("block-ar");
-  const toggle = document.getElementById("toggle-analytics");
-  if (block.style.display === "none") {
-    block.style.display = "block";
-    toggle.textContent = "(скрыть)";
-  } else {
-    block.style.display = "none";
-    toggle.textContent = "(показать)";
-  }
-});
+        if (val > 0 && val < 3) {
+          context.set("KolvoSotrudnikovVATS", 3);
+        }
 
-  </script>
+        if (
+          val === 0 &&
+          getNumber("KolvoSIPTrankov") === 0 &&
+          getNumber("KolvoSIPURI") === 0 &&
+          getNumber("KolvoSIPAkkauntov") === 0 &&
+          getCheckbox("VATS") === true
+        ) {
+          context.set("VATS", false);
+        }
+      },
+      DlitelnostHraneniyaVATS: (context) => {
+        const val = document.getElementById("DlitelnostHraneniyaVATS")?.value;
+        if (val !== "0" && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+        if (val === "0" && getCheckbox("VATS")) {
+          context.select("DlitelnostHraneniyaVATS", "1 неделя");
+        }
+      },
+      LiniyGrupovogoVizova: (context) => {
+        const val = getNumber("LiniyGrupovogoVizova");
+        if (val > 0 && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+        if (val >= 0 && val < 3 && getCheckbox("VATS")) {
+          context.set("LiniyGrupovogoVizova", 3);
+        }
+      },
+      LiniyIshodyashihZvonkov: (context) => {
+        const val = getNumber("LiniyIshodyashihZvonkov");
+        if (val > 0 && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+        if (val >= 0 && val < 30 && getCheckbox("VATS")) {
+          context.set("LiniyIshodyashihZvonkov", 30);
+        }
+      },
+      KolvoSIPTrankov: (context) => {
+        const val = getNumber("KolvoSIPTrankov");
+        const kanalnost = document.getElementById("KanalnostSIPTrankov")?.value;
+        if (val > 0) {
+          if (!getCheckbox("VATS")) {
+            context.set("VATS", true);
+          }
+          if (parseInt(kanalnost, 10) < 30) {
+            context.select("KanalnostSIPTrankov", "30");
+          }
+        }
+        if (
+          val === 0 &&
+          getNumber("KolvoSotrudnikovVATS") === 0 &&
+          getNumber("KolvoSIPURI") === 0 &&
+          getNumber("KolvoSIPAkkauntov") === 0 &&
+          getCheckbox("VATS") === true
+        ) {
+          context.set("VATS", false);
+        }
+        if (val === 0 && kanalnost !== "0") {
+          context.select("KanalnostSIPTrankov", "0");
+        }
+      },
+      KanalnostSIPTrankov: (context) => {
+        const val = document.getElementById("KanalnostSIPTrankov")?.value;
+        if (val !== "0") {
+          if (!getCheckbox("VATS")) {
+            context.set("VATS", true);
+          }
+          if (getNumber("KolvoSIPTrankov") === 0) {
+            context.set("KolvoSIPTrankov", 1);
+          }
+        } else {
+          if (getNumber("KolvoSIPTrankov") !== 0) {
+            context.set("KolvoSIPTrankov", 0);
+          }
+        }
+      },
+      KolvoSIPURI: (context) => {
+        const val = getNumber("KolvoSIPURI");
+        if (val > 0 && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+        if (
+          val === 0 &&
+          getNumber("KolvoSotrudnikovVATS") === 0 &&
+          getNumber("KolvoSIPTrankov") === 0 &&
+          getNumber("KolvoSIPAkkauntov") === 0 &&
+          getCheckbox("VATS") === true
+        ) {
+          context.set("VATS", false);
+        }
+      },
+      KolvoSIPAkkauntov: (context) => {
+        const val = getNumber("KolvoSIPAkkauntov");
+        const kanalnost = document.getElementById("KanalnostSIPAkkauntov")?.value;
+        if (val > 0) {
+          if (!getCheckbox("VATS")) {
+            context.set("VATS", true);
+          }
+          if (parseInt(kanalnost, 10) < 30) {
+            context.select("KanalnostSIPAkkauntov", "30");
+          }
+        }
+        if (
+          val === 0 &&
+          getNumber("KolvoSotrudnikovVATS") === 0 &&
+          getNumber("KolvoSIPURI") === 0 &&
+          getNumber("KolvoSIPTrankov") === 0 &&
+          getCheckbox("VATS") === true
+        ) {
+          context.set("VATS", false);
+        }
+        if (val === 0 && kanalnost !== "0") {
+          context.select("KanalnostSIPAkkauntov", "0");
+        }
+      },
+      KanalnostSIPAkkauntov: (context) => {
+        const val = document.getElementById("KanalnostSIPAkkauntov")?.value;
+        if (val !== "0") {
+          if (!getCheckbox("VATS")) {
+            context.set("VATS", true);
+          }
+          if (getNumber("KolvoSIPAkkauntov") === 0) {
+            context.set("KolvoSIPAkkauntov", 1);
+          }
+        } else {
+          if (getNumber("KolvoSIPAkkauntov") !== 0) {
+            context.set("KolvoSIPAkkauntov", 0);
+          }
+        }
+      },
+      NomeraVATS: (context) => {
+        const val = getNumber("NomeraVATS");
+        if (val > 0 && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+      },
+      NomeraVATS8800: (context) => {
+        const val = getNumber("NomeraVATS8800");
+        if (val > 0 && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+      },
+      KolvoSvoihNomerov: (context) => {
+        const val = getNumber("KolvoSvoihNomerov");
+        if (val > 0 && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+      },
+      fmcDynamicRule: (context, id) => {
+    const isFmcField = id.startsWith('KolvoFMC_') || id.startsWith('TarifFMC_');
+    if (!isFmcField) return; 
+    
+    const index = id.split('_')[1];
+    const count = getNumber('KolvoFMC_' + index);
+    const tarif = getSelect('TarifFMC_' + index);
+    
+    // --- ИСПРАВЛЕНИЕ 2 (Удаление набора при 0 или нет) ---
+    // Если мы уже в процессе cascade и обнаружили 0 или нет -> планируем удаление
+    if (count === 0 || tarif === "нет") {
+        setTimeout(() => removeFmcBundle(index), 10);
+        return; 
+    }
+
+    if (count > 0 || tarif !== "нет") {
+        if (!getCheckbox("VATS")) {
+            context.set("VATS", true);
+        }
+    }
+},
+RegionDostavki: (context) => {
+    const val = document.getElementById("RegionDostavki")?.value;
+    const totalFmcBundles = document.querySelectorAll('#fmc-bundles-container > .fmc-subgroup').length;
+    
+    if (val !== "нет") {
+        if (!getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+        if (totalFmcBundles === 0) {
+            addFmcBundle(false, '200 минут, 1Гб интернета', 1);
+        }
+    }
+},
+      OMNI: (context) => {
+        const val = getCheckbox("OMNI");
+        if (val === true) {
+          if (getNumber("KolvoSotrudnikovOMNI") < 3) {
+            context.set("KolvoSotrudnikovOMNI", 3);
+          }
+          if (!getCheckbox("TgVkAvito")) {
+            context.set("TgVkAvito", true);
+          }
+          if (!getCheckbox("OMNIKnopka")) {
+            context.set("OMNIKnopka", true);
+          }
+        } else {
+          context.set("KolvoSotrudnikovOMNI", 0);
+          context.set("KolvoWA", 0);
+          context.set("KolvoWABA", 0);
+          context.set("TgVkAvito", false);
+          context.set("OMNIKnopka", false);
+
+          if (!getCheckbox("VATS") && !getCheckbox("AnalitikaProdaj")) {
+            context.set("AmoBitrix", false);
+          }
+          if (!getCheckbox("VATS") && !getCheckbox("AR")) {
+            context.set("UvedomlenieOSobitiyah", false);
+          }
+        }
+      },
+      KolvoSotrudnikovOMNI: (context) => {
+        const val = getNumber("KolvoSotrudnikovOMNI");
+        if (val > 0) {
+          if (!getCheckbox("OMNI")) {
+            context.set("OMNI", true);
+          }
+          if (val < 3) {
+            context.set("KolvoSotrudnikovOMNI", 3);
+          }
+        }
+        if (val === 0 && getCheckbox("OMNI")) {
+          context.set("OMNI", false);
+        }
+      },
+      KolvoWA: (context) => {
+        if (getNumber("KolvoWA") > 0 && !getCheckbox("OMNI")) {
+          context.set("OMNI", true);
+        }
+      },
+      KolvoWABA: (context) => {
+        if (getNumber("KolvoWABA") > 0 && !getCheckbox("OMNI")) {
+          context.set("OMNI", true);
+        }
+      },
+      TgVkAvito: (context) => {
+        if (getCheckbox("TgVkAvito") && !getCheckbox("OMNI")) {
+          context.set("OMNI", true);
+        }
+      },
+      OMNIKnopka: (context) => {
+        if (getCheckbox("OMNIKnopka") && !getCheckbox("OMNI")) {
+          context.set("OMNI", true);
+        }
+      },
+      AR: (context) => {
+        if (getCheckbox("AR")) {
+          if (getNumber("KolvoSaitov") === 0) {
+            context.set("KolvoSaitov", 1);
+          }
+          context.select("KolvoPolzovatelskihIstochnikov", "50");
+          context.select("PaketTrafika", "10000");
+        } else {
+          context.set("KolvoSaitov", 0);
+          context.select("KolvoPolzovatelskihIstochnikov", "0");
+          context.select("PaketTrafika", "0");
+          context.select("EmailTreking", "нет");
+
+          context.set("KT", false);
+          context.set("NomeraKT", 0);
+          context.set("NomeraKT8800", 0);
+          context.select("DlitelnostHraneniyaAR", "0");
+          context.set("KonstruktorOtchetov", false);
+          context.set("AnalitikaProdaj", false);
+          context.set("IntegraciyaSVidjetami", false);
+          context.set("AvtoperezvonPoZayavkam", false);
+          if (!getCheckbox("VATS") && !getCheckbox("OMNI")) {
+            context.set("UvedomlenieOSobitiyah", false);
+            context.set("AmoBitrix", false);
+          }
+        }
+      },
+      KolvoSaitov: (context) => {
+        if (getNumber("KolvoSaitov") > 0 && !getCheckbox("AR")) {
+          context.set("AR", true);
+        }
+      },
+      KolvoPolzovatelskihIstochnikov: (context) => {
+        const val = document.getElementById("KolvoPolzovatelskihIstochnikov")?.value;
+        if (val && val !== "0" && !getCheckbox("AR")) {
+          context.set("AR", true);
+        }
+      },
+      PaketTrafika: (context) => {
+        const val = document.getElementById("PaketTrafika")?.value;
+        if (val && val !== "0" && !getCheckbox("AR")) {
+          context.set("AR", true);
+        }
+      },
+      KT: (context) => {
+        const val = getCheckbox("KT");
+        if (val === true && !getCheckbox("AR")) {
+          context.set("AR", true);
+        }
+        if (getSelect("DlitelnostHraneniyaAR") === "0") context.select("DlitelnostHraneniyaAR", "1 неделя");
+        
+        if (val === false) {
+          context.set("NomeraKT", 0);
+          context.set("NomeraKT8800", 0);
+          context.select("DlitelnostHraneniyaAR", "0");
+        }
+      },
+      NomeraKT: (context) => {
+        if (getNumber("NomeraKT") > 0 && !getCheckbox("KT")) {
+          context.set("KT", true);
+        }
+      },
+      NomeraKT8800: (context) => {
+        if (getNumber("NomeraKT8800") > 0 && !getCheckbox("KT")) {
+          context.set("KT", true);
+        }
+      },
+      DlitelnostHraneniyaAR: (context) => {
+        const val = document.getElementById("DlitelnostHraneniyaAR")?.value;
+        if (val !== "0" && !getCheckbox("KT")) {
+          context.set("KT", true);
+        }
+        if (val === "0" && getCheckbox("KT")) {
+          context.select("DlitelnostHraneniyaAR", "1 неделя");
+        }
+      },
+      EmailTreking: (context) => {
+        const val = document.getElementById("EmailTreking")?.value;
+        if (val && val !== "нет" && !getCheckbox("AR")) {
+          context.set("AR", true);
+        }
+      },
+      KonstruktorOtchetov: (context) => {
+        if (getCheckbox("KonstruktorOtchetov") && !getCheckbox("AR")) {
+          context.set("AR", true);
+        }
+      },
+      AnalitikaProdaj: (context) => {
+        if (getCheckbox("AnalitikaProdaj")) {
+          if (!getCheckbox("AR")) {
+            context.set("AR", true);
+          }
+          if (!getCheckbox("AmoBitrix")) {
+            context.set("AmoBitrix", true);
+          }
+        } else {
+          if (!getCheckbox("OMNI") && !getCheckbox("VATS")) {
+            context.set("AmoBitrix", false);
+          }
+        }
+      },
+      IntegraciyaSVidjetami: (context) => {
+        if (getCheckbox("IntegraciyaSVidjetami") && !getCheckbox("AR")) {
+          context.set("AR", true);
+        }
+      },
+      IntegraciyaOtraslevie: (context) => {
+        if (getCheckbox("IntegraciyaOtraslevie") && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+      },
+      VneshnieATS: (context) => {
+        if (getCheckbox("VneshnieATS") && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+      },
+      AmoBitrix: (context) => {
+        if (getCheckbox("AmoBitrix")) {
+          if (!getCheckbox("VATS") && !getCheckbox("OMNI") && !getCheckbox("AnalitikaProdaj")) {
+            context.set("VATS", true);
+          }
+        } else {
+          if (getCheckbox("AnalitikaProdaj")) {
+            context.set("AnalitikaProdaj", false);
+          }
+        }
+      },
+      VezdeKakDoma: (context) => {
+        if (getCheckbox("VezdeKakDoma") && !getCheckbox("VATS")) {
+          context.set("VATS", true);
+        }
+      },
+      UvedomlenieOSobitiyah: (context) => {
+        if (getCheckbox("UvedomlenieOSobitiyah")) {
+          if (getCheckbox("SpasenieKommunikatsiy")) {
+            context.set("UvedomlenieOSobitiyah", false);
+          } else if (!getCheckbox("VATS") && !getCheckbox("OMNI") && !getCheckbox("AR")) {
+            context.set("VATS", true);
+          }
+        }
+      },
+      SpasenieKommunikatsiy: (context) => {
+        if (getCheckbox("SpasenieKommunikatsiy")) {
+          document.getElementById('UvedomlenieOSobitiyah').disabled = true;
+          if (!getCheckbox("VATS")) {
+            context.set("VATS", true);
+          }
+          if (getCheckbox("UvedomlenieOSobitiyah")) {
+            context.set("UvedomlenieOSobitiyah", false);
+          }
+        } else {
+          document.getElementById('UvedomlenieOSobitiyah').disabled = false;
+        }
+      },
+      AvtoperezvonPoZayavkam: (context) => {
+        if (getCheckbox("AvtoperezvonPoZayavkam")) {
+          if (!getCheckbox("VATS")) {
+            context.set("VATS", true);
+          }
+          if (!getCheckbox("AR")) {
+            context.set("AR", true);
+          }
+        }
+      },
+    };
+
+    const manualChanges = new Set();
+    let cascadeQueue = [];
+    let isProcessing = false;
+
+    function runCascade(startField) {
+        if (isProcessing) { manualChanges.add(startField); return; }
+        // --- ИСПРАВЛЕНИЕ 1 (try/finally) ---
+        try {
+            cascadeQueue = [startField];
+            isProcessing = true;
+            let depth = 0; const maxDepth = 3;
+            const context = {
+                set: (id, value) => {
+                    const el = document.getElementById(id); if (!el) return;
+                    const current = el.type === "checkbox" ? el.checked : el.value;
+                    const changedByUser = manualChanges.has(id);
+                    const isSame = current == value; 
+                    if (isSame || changedByUser) return;
+                    
+                    if (el.type === "checkbox") el.checked = value; else el.value = value;
+                    cascadeQueue.push(id);
+                },
+                select: (id, value) => {
+                    const el = document.getElementById(id); if (!el) return;
+                    const changedByUser = manualChanges.has(id);
+                    const isSame = el.value === value;
+                    if (isSame || changedByUser) return;
+                    
+                    el.value = value;
+                    updateSelectTrigger(id);
+                    cascadeQueue.push(id);
+                }
+            };
+            while (cascadeQueue.length && depth < maxDepth) {
+                const current = cascadeQueue.shift();
+                const rule = rules[current];
+                if (rule) rule(context);
+                rules.fmcDynamicRule(context, current);
+                depth++;
+            }
+        } finally {
+            isProcessing = false;
+        }
+        manualChanges.clear();
+        updateTotals();
+    }
+
+    function updateTotals() {
+        let totalFmcCost = 0;
+        let totalFmcCount = 0;
+
+        const fmcBundles = document.querySelectorAll('#fmc-bundles-container > .fmc-subgroup');
+
+        fmcBundles.forEach((bundle) => {
+            const index = bundle.getAttribute('data-index');
+            const count = getNumber('KolvoFMC_' + index);
+            const tarif = getSelect('TarifFMC_' + index);
+            
+            totalFmcCount += count;
+            
+            let pricePerSim = 0;
+            switch (tarif) {
+                case "200 минут, 1Гб интернета": pricePerSim = 790; break;
+                case "600 минут, 5Гб интернета": pricePerSim = 1290; break;
+                case "800 минут, 10Гб интернета": pricePerSim = 1990; break;
+                case "2000 минут, 20Гб интернета": pricePerSim = 4490; break;
+                case "15 минут, 0,2Гб интернета": pricePerSim = 390; break;
+            }
+            
+            const costBundle = pricePerSim * count;
+            totalFmcCost += costBundle;
+
+            const costEl = document.getElementById(`fmc-cost-total-${index}`);
+            if(costEl) {
+                 costEl.textContent = costBundle.toLocaleString('ru-RU') + ' ₽ / мес';
+                 costEl.className = 'price-badge cost';
+            }
+        });
+
+        const sumAll = parseVal("NomeraVATS") + parseVal("NomeraVATS8800") + totalFmcCount;
+        const vsego = document.getElementById("NomeraVATSVsego");
+        if(vsego) vsego.value = sumAll;
+        
+        // --- ИСПРАВЛЕНИЕ 5 (из ТЗ): Плашка "всего" показывает только лимит ---
+        const costNomeraVsegoEl = document.getElementById('cost-NomeraVATSVsego');
+        if(costNomeraVsegoEl) {
+             costNomeraVsegoEl.innerHTML = '';
+        }
+
+        Object.entries(formulaMap).forEach(([id, formula]) => {
+            const costEl = document.getElementById(`cost-${id}`);
+            const limitEl = document.getElementById(`limit-${id}`);
+            
+            if(costEl) costEl.innerHTML = '';
+            if(limitEl && limitEl !== costEl) limitEl.innerHTML = '';
+
+            let costVal = null;
+            let limitVal = null;
+
+            if (formula.cost) {
+                const val = formula.cost();
+                if (typeof val === "number" && val > 0) costVal = val;
+                else if (val && val !== 0 && typeof val === "string") costVal = val;
+            }
+
+            if (formula.limit) {
+                const val = formula.limit();
+                if (typeof val === "number" && val > 0) limitVal = val;
+                else if (val && val !== 0 && typeof val === "string") limitVal = val;
+            }
+
+            const createBadge = (val, type) => {
+                const badge = document.createElement('div');
+                badge.className = `price-badge ${type}`;
+                const isNum = typeof val === 'number';
+                badge.textContent = isNum ? `${val.toLocaleString('ru-RU')} ₽${type === 'cost' ? ' / мес' : ''}` : val;
+                
+                if(type === 'limit' && isNum) badge.textContent = `${val.toLocaleString('ru-RU')} ₽ / мес - расширение`;
+                
+                if(String(val).includes("вкл")) badge.textContent = "Включено";
+                if(String(val).includes("уменьшите")) { badge.textContent = val; badge.style.color = "red"; }
+                return badge;
+            };
+
+            if(costEl && costVal !== null) {
+                costEl.appendChild(createBadge(costVal, 'cost'));
+            }
+
+            if(limitVal !== null) {
+                if(limitEl && limitEl !== costEl) {
+                    limitEl.appendChild(createBadge(limitVal, 'limit'));
+                } else if(costEl) {
+                     costEl.appendChild(createBadge(limitVal, 'limit'));
+                }
+            }
+        });
+
+        let total = 0;
+        Object.entries(formulaMap).forEach(([id, formula]) => {
+            if(formula.cost) {
+                const v = formula.cost();
+                if(typeof v === 'number') total += v;
+            }
+            if(formula.limit) {
+                const v = formula.limit();
+                if(typeof v === 'number') total += v;
+            }
+        });
+        total += totalFmcCost; 
+        const totalFormatted = total.toLocaleString('ru-RU');
+        document.getElementById('total-monthly').textContent = totalFormatted;
+
+        const nom8800 = parseVal("NomeraVATS8800") + parseVal("NomeraKT8800");
+        const minimal = (nom8800 * 700).toLocaleString('ru-RU');
+        document.getElementById('total-minimal').textContent = minimal + " ₽ / мес";
+
+        const connect = (parseVal("NomeraVATS") * 300 + totalFmcCount * 250).toLocaleString('ru-RU');
+        document.getElementById('total-connection').textContent = connect + " ₽";
+
+        const region = (document.getElementById("RegionDostavki")?.value || "").trim();
+        let delPrice = 0;
+        if (region.includes("Москва") || region.includes("Петербург")) delPrice = 0;
+        else if (region.includes("Московская") || region.includes("Ленинградская")) delPrice = 500;
+        else if (region.includes("Центральная")) delPrice = 750;
+        else if (region.includes("Юг")) delPrice = 1000;
+        else if (region.includes("Дальний")) delPrice = 1300;
+        document.getElementById('total-delivery').textContent = delPrice + " ₽";
+
+        const regionPlaceholder = document.getElementById('cost-RegionDostavki-placeholder');
+        if (regionPlaceholder) {
+            if (delPrice === 0 && region !== "нет" && region !== "") {
+                // Если бесплатно - пишем текст
+                regionPlaceholder.className = 'price-badge cost';
+                regionPlaceholder.textContent = `бесплатная доставка`; 
+            
+            } else if (delPrice > 0) {
+                // Если платно - пишем цену
+                regionPlaceholder.className = 'price-badge cost';
+                regionPlaceholder.textContent = `${delPrice.toLocaleString('ru-RU')} ₽ - доставка`;
+            } else {
+                regionPlaceholder.textContent = '';
+                regionPlaceholder.className = '';
+            }
+        }
+
+        const monthly = total;
+        const minimalNum = nom8800 * 700;
+        const connectionNum = parseVal("NomeraVATS") * 300 + totalFmcCount * 250;
+        const baseSum = monthly + minimalNum + connectionNum;
+        const guarantee = baseSum > 0 ? (baseSum < 4000 ? 4000 : baseSum) : 0;
+        document.getElementById('total-guarantee').textContent = guarantee.toLocaleString('ru-RU') + " ₽";
+
+        const maxLimit = baseSum <= 10000 ? guarantee * 2 : guarantee * 1.7;
+        const guaranteeTooltipText = `В связи с постоплатой предотвращает приостановку услуг. Возвращается при закрытии договора. Замораживается на счете и увеличивает кредитный лимит. <br>Максимальный порог: <b>${maxLimit.toLocaleString('ru-RU')} руб.</b>`;
+        document.getElementById('tooltip-guarantee').innerHTML = guaranteeTooltipText;
+        
+        const printGuaranteeDesc = document.getElementById('print-total-guarantee-desc');
+        if(printGuaranteeDesc) printGuaranteeDesc.innerHTML = guaranteeTooltipText;
+        
+        updateMobileSheet(totalFormatted + " ₽ / мес", minimal + " ₽ / мес", connect + " ₽", delPrice + " ₽", guarantee.toLocaleString('ru-RU') + " ₽");
+    }
+    
+    document.querySelectorAll('select').forEach(s => updateSelectTrigger(s.id));
+    
+    // Initialize first FMC bundle to show default UI
+    addFmcBundle(true);
+    updateTotals();
+</script>
+<!-- ============================================================== -->
+<!-- СКРЫТЫЙ ШАБЛОН ДЛЯ ОДНОГО НАБОРА СИМ-КАРТ (Добавьте в конец <body>) -->
+<!-- ============================================================== -->
+<template id="fmc-bundle-template">
+    <div class="fmc-subgroup" data-index="INDEX_ID" style="padding-top: 15px; margin-top: 30px; border-top: 1px dashed #ddd;">
+        <div class="fmc-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; padding-bottom: 8px;">
+             <div>Набор SIM #<span class="bundle-num">1</span></div>
+             <button type="button" class="stepper-btn remove-bundle-btn" style="width: 30px; height: 30px; background: #FFEDEA; color: #E74C3C;" onclick="removeFmcBundle('INDEX_ID')">
+                 −
+             </button>
+        </div>
+        
+        <!-- КОЛ-ВО СИМ КАРТ -->
+        <div class="option-row" style="padding-bottom: 5px; border-bottom: none;">
+            <div class="option-info">
+                <div class="option-name">Кол-во сим карт</div>
+                <div class="option-meta"></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="stepper">
+                    <button type="button" class="stepper-btn" onclick="stepInput('KolvoFMC_INDEX_ID', -1)">−</button>
+                    <input type="text" inputmode="numeric" class="stepper-input" id="KolvoFMC_INDEX_ID" value="0" onchange="runCascade('KolvoFMC_INDEX_ID')">
+                    <button type="button" class="stepper-btn" onclick="stepInput('KolvoFMC_INDEX_ID', 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ТАРИФ FMC СИМ КАРТ -->
+        <div class="option-row stacked" style="padding-top: 0; padding-bottom: 8px;">
+            <div class="option-info">
+                <div class="option-name">Тариф на сим картах</div>
+                <div class="option-meta"><span id="cost-TarifFMC_INDEX_ID"></span></div>
+            </div>
+            <div class="control-wrapper">
+                <div class="custom-select-trigger" onclick="openSelectModal('TarifFMC_INDEX_ID', 'Тариф на сим картах')">нет</div>
+                <select id="TarifFMC_INDEX_ID" class="hidden-native-select" onchange="runCascade('TarifFMC_INDEX_ID')">
+                    <option value="нет">нет</option>
+                    <option value="200 минут, 1Гб интернета">200 минут, 1Гб интернета</option>
+                    <option value="600 минут, 5Гб интернета">600 минут, 5Гб интернета</option>
+                    <option value="800 минут, 10Гб интернета">800 минут, 10Гб интернета</option>
+                    <option value="2000 минут, 20Гб интернета">2000 минут, 20Гб интернета</option>
+                    <option value="15 минут, 0,2Гб интернета">15 минут, 0,2Гб интернета</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="fmc-cost-row">
+            <span id="fmc-cost-total-INDEX_ID"></span>
+        </div>
+    </div>
+</template>
 </body>
 </html>
