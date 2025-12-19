@@ -11,7 +11,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+      if (window.Telegram && window.Telegram.WebApp) {
+          const tg = window.Telegram.WebApp;
+          try { tg.expand(); } catch (e) {}
+          tg.ready();
+          try { 
+              tg.setHeaderColor('#F0F2F5'); 
+              tg.setBackgroundColor('#F0F2F5'); 
+          } catch (e) {}
+      }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
   
   <style>
     :root {
@@ -1837,6 +1848,11 @@ function clearFmcBundles() {
     }
 
     async function printKP() {
+        // --- ЗАЩИТА: Проверяем, загрузилась ли библиотека PDF ---
+        if (typeof html2pdf === 'undefined') {
+            showToast("loading", "Загрузка...", "Модуль печати еще загружается. Попробуйте через пару секунд.", 2000);
+            return;
+        }
         if (typeof ym === 'function') {
             ym(105781169,'reachGoal','print_kp');
         }
@@ -2945,21 +2961,7 @@ RegionDostavki: (context) => {
     updateTotals();
     /* --- YANDEX METRIKA GOALS --- */
     document.addEventListener("DOMContentLoaded", function() {
-        // 1. НАСТРОЙКИ TELEGRAM WEB APP
-        if (window.Telegram && window.Telegram.WebApp) {
-            const tg = window.Telegram.WebApp;
-            
-            // Сообщаем, что приложение готово (убирает кружок загрузки)
-            tg.ready();
-            
-            // Разворачиваем на весь экран
-            try { tg.expand(); } catch (e) {}
-
-            try { 
-                tg.setHeaderColor('#F0F2F5'); 
-                tg.setBackgroundColor('#F0F2F5'); // Цвет фона самого приложения
-            } catch (e) {}
-        }
+        
         // Функция для безопасной отправки цели
         function sendGoal(targetName) {
             if (typeof ym === 'function') {
