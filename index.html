@@ -1848,6 +1848,20 @@ function clearFmcBundles() {
     }
 
     async function printKP() {
+        // --- 1. ПРОВЕРКА: Если сумма 0, не печатаем ---
+        const totalEl = document.getElementById('total-monthly');
+        // Берем текст (например "1 200"), удаляем всё кроме цифр и превращаем в число
+        const totalValue = totalEl ? parseInt(totalEl.textContent.replace(/\D/g, '')) || 0 : 0;
+
+        if (totalValue === 0) {
+            showToast(
+                "error", 
+                "Расчет пуст", 
+                "Вы ничего не выбрали. <br>Пожалуйста, добавьте услуги, чтобы сформировать PDF.", 
+                3000 // Уведомление исчезнет само через 3 секунды
+            );
+            return; // ОСТАНОВИТЬ выполнение функции
+        }
         // --- ЗАЩИТА: Проверяем, загрузилась ли библиотека PDF ---
         if (typeof html2pdf === 'undefined') {
             showToast("loading", "Загрузка...", "Модуль печати еще загружается. Попробуйте через пару секунд.", 2000);
@@ -2073,7 +2087,15 @@ function clearFmcBundles() {
                 });
 
                 if (response.ok) {
-                    showToast("success", "Готово!", "Расчет успешно отправлен вам в Telegram.", 0);
+                    // Ссылка на ваш бот
+                    const botLink = "https://t.me/UisCalculatorBot";
+
+                    showToast(
+                        "success", 
+                        "Готово!", 
+                        `Расчет успешно отправлен вам в <a href="${botLink}" target="_blank" style="color: #0000aa; text-decoration: underline; font-weight: bold;">Telegram</a>.`, 
+                        0
+                    );
                 } else {
                     const errorData = await response.json();
                     let errorMsg = errorData.error || "Не удалось отправить расчет.";
