@@ -1858,7 +1858,7 @@ function clearFmcBundles() {
                 "error", 
                 "Расчет пуст", 
                 "Вы ничего не выбрали. <br>Пожалуйста, добавьте услуги, чтобы сформировать PDF.", 
-                3000 // Уведомление исчезнет само через 3 секунды
+                5000 // Уведомление исчезнет само через 3 секунды
             );
             return; // ОСТАНОВИТЬ выполнение функции
         }
@@ -2094,7 +2094,7 @@ function clearFmcBundles() {
                         "success", 
                         "Готово!", 
                         `Расчет успешно отправлен вам в <a href="${botLink}" target="_blank" style="color: #0000aa; text-decoration: underline; font-weight: bold;">Telegram</a>.`, 
-                        0
+                        15000
                     );
                 } else {
                     const errorData = await response.json();
