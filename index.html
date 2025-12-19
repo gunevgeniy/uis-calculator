@@ -2941,6 +2941,22 @@ RegionDostavki: (context) => {
     updateTotals();
     /* --- YANDEX METRIKA GOALS --- */
     document.addEventListener("DOMContentLoaded", function() {
+        // 1. НАСТРОЙКИ TELEGRAM WEB APP
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            
+            // Сообщаем, что приложение готово (убирает кружок загрузки)
+            tg.ready();
+            
+            // Разворачиваем на весь экран
+            try { tg.expand(); } catch (e) {}
+
+            // Красим шапку в синий. Текст и кнопки станут БЕЛЫМИ автоматически.
+            try { 
+                tg.setHeaderColor('#0000aa'); 
+                tg.setBackgroundColor('#F0F2F5'); // Цвет фона самого приложения
+            } catch (e) {}
+        }
         // Функция для безопасной отправки цели
         function sendGoal(targetName) {
             if (typeof ym === 'function') {
