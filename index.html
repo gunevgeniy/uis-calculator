@@ -1387,7 +1387,7 @@
 
     <!-- 3) Номера 8-800 -->
     <div id="tooltip-8800">
-        <b>+700 ₽ / мес</b> (за каждый номер) — минимальный платеж за связь<br>
+        <b>+800 ₽ / мес</b> (за каждый номер) — минимальный платеж за связь<br>
         Расходуется на оплату входящих минут
     </div>
 
@@ -1476,7 +1476,7 @@
     <!-- 13) Уведомления -->
     <div id="tooltip-notify">
         Уведомления по E-mail и SMS о разных событиях в ВАТС и ОМНИ.<br>
-        Стоимость SMS — <b>3,70 ₽/шт</b>
+        Стоимость SMS — <b>6 ₽/шт</b>
     </div>
 
     <!-- 14) Внешние АТС -->
@@ -1959,11 +1959,13 @@ function clearFmcBundles() {
                         if (count > 0 && tariffName !== 'нет') {
                             let pricePerSim = 0;
                             switch (tariffName) {
-                                case "200 минут, 1Гб интернета": pricePerSim = 790; break;
-                                case "600 минут, 5Гб интернета": pricePerSim = 1290; break;
-                                case "800 минут, 10Гб интернета": pricePerSim = 1990; break;
-                                case "2000 минут, 20Гб интернета": pricePerSim = 4490; break;
-                                case "15 минут, 0,2Гб интернета": pricePerSim = 390; break;
+                                case "200 минут, 1Гб интернета": pricePerSim = 810; break;
+                                case "600 минут, 5Гб интернета": pricePerSim = 1350; break;
+                                case "800 минут, 10Гб интернета": pricePerSim = 2050; break;
+                                case "2000 минут, 20Гб интернета": pricePerSim = 4600; break;
+                                case "15 минут, 0,2Гб интернета": pricePerSim = 400; break;
+                                case "2000 минут, 1Гб интернета": pricePerSim = 3600; break;
+                                case "15 минут, 30Гб интернета": pricePerSim = 3050; break;
                             }
                             const totalCost = pricePerSim * count;
 
@@ -2197,8 +2199,8 @@ function clearFmcBundles() {
         KolvoSIPURI: { cost: () => { const val = getNumber("KolvoSIPURI"); return val < 1501 ? val * 100 : "уменьшите до 1500"; } },
         KolvoSIPAkkauntov: { cost: () => { const val = getNumber("KolvoSIPAkkauntov"); return val < 1501 ? val * 300 : "уменьшите до 1500"; } },
         KanalnostSIPAkkauntov: { limit: () => { const val = getNumber("KanalnostSIPAkkauntov"); if (val < 31) return 0; if (val < 61) return 1000; if (val < 91) return 1500; if (val < 181) return 3000; return 0; } },
-        NomeraVATS: { cost: () => getNumber("NomeraVATS") * 300 },
-        NomeraVATS8800: { cost: () => getNumber("NomeraVATS8800") * 590 },
+        NomeraVATS: { cost: () => getNumber("NomeraVATS") * 310 },
+        NomeraVATS8800: { cost: () => getNumber("NomeraVATS8800") * 610 },
         KolvoSvoihNomerov: { cost: () => { const val = getNumber("KolvoSvoihNomerov"); if (val < 1) return 0; if (val < 11) return val * 200; return 2000 + ((val - 10) * 100); } },
         
         // --- ИСПРАВЛЕНИЕ 5 (из ТЗ): Считаем только расширение лимита ---
@@ -2242,8 +2244,8 @@ function clearFmcBundles() {
             }
         },
         KT: { cost: () => getCheckbox("KT") ? 1500 : 0 },
-        NomeraKT: { cost: () => getNumber("NomeraKT") * 300 },
-        NomeraKT8800: { cost: () => getNumber("NomeraKT8800") * 590 },
+        NomeraKT: { cost: () => getNumber("NomeraKT") * 310 },
+        NomeraKT8800: { cost: () => getNumber("NomeraKT8800") * 610 },
         DlitelnostHraneniyaAR: {
             limit: () => {
                 const values = { "0": 0, "1 месяц": 500, "3 месяца": 1000, "6 месяцев": 1500, "1 год": 3000, "2 года": 5000, "4 года": 7000 };
@@ -2794,11 +2796,13 @@ RegionDostavki: (context) => {
             
             let pricePerSim = 0;
             switch (tarif) {
-                case "200 минут, 1Гб интернета": pricePerSim = 790; break;
-                case "600 минут, 5Гб интернета": pricePerSim = 1290; break;
-                case "800 минут, 10Гб интернета": pricePerSim = 1990; break;
-                case "2000 минут, 20Гб интернета": pricePerSim = 4490; break;
-                case "15 минут, 0,2Гб интернета": pricePerSim = 390; break;
+                case "200 минут, 1Гб интернета": pricePerSim = 810; break;
+                case "600 минут, 5Гб интернета": pricePerSim = 1350; break;
+                case "800 минут, 10Гб интернета": pricePerSim = 2050; break;
+                case "2000 минут, 20Гб интернета": pricePerSim = 4600; break;
+                case "15 минут, 0,2Гб интернета": pricePerSim = 400; break;
+                case "2000 минут, 1Гб интернета": pricePerSim = 3600; break;
+                case "15 минут, 30Гб интернета": pricePerSim = 3050; break;
             }
             
             const costBundle = pricePerSim * count;
@@ -2885,19 +2889,19 @@ RegionDostavki: (context) => {
         document.getElementById('total-monthly').textContent = totalFormatted;
 
         const nom8800 = parseVal("NomeraVATS8800") + parseVal("NomeraKT8800");
-        const minimal = (nom8800 * 700).toLocaleString('ru-RU');
+        const minimal = (nom8800 * 800).toLocaleString('ru-RU');
         document.getElementById('total-minimal').textContent = minimal + " ₽ / мес";
 
-        const connect = (parseVal("NomeraVATS") * 300 + totalFmcCount * 250).toLocaleString('ru-RU');
+        const connect = (parseVal("NomeraVATS") * 310 + totalFmcCount * 260).toLocaleString('ru-RU');
         document.getElementById('total-connection').textContent = connect + " ₽";
 
         const region = (document.getElementById("RegionDostavki")?.value || "").trim();
         let delPrice = 0;
         if (region.includes("Москва") || region.includes("Петербург")) delPrice = 0;
-        else if (region.includes("Московская") || region.includes("Ленинградская")) delPrice = 500;
-        else if (region.includes("Центральная")) delPrice = 750;
-        else if (region.includes("Юг")) delPrice = 1000;
-        else if (region.includes("Дальний")) delPrice = 1300;
+        else if (region.includes("Московская") || region.includes("Ленинградская")) delPrice = 550;
+        else if (region.includes("Центральная")) delPrice = 800;
+        else if (region.includes("Юг")) delPrice = 1050;
+        else if (region.includes("Дальний")) delPrice = 1350;
         document.getElementById('total-delivery').textContent = delPrice + " ₽";
 
         const regionPlaceholder = document.getElementById('cost-RegionDostavki-placeholder');
@@ -2918,8 +2922,8 @@ RegionDostavki: (context) => {
         }
 
         const monthly = total;
-        const minimalNum = nom8800 * 700;
-        const connectionNum = parseVal("NomeraVATS") * 300 + totalFmcCount * 250;
+        const minimalNum = nom8800 * 800;
+        const connectionNum = parseVal("NomeraVATS") * 310 + totalFmcCount * 260;
         const baseSum = monthly + minimalNum + connectionNum;
         const guarantee = baseSum > 0 ? (baseSum < 4000 ? 4000 : baseSum) : 0;
         document.getElementById('total-guarantee').textContent = guarantee.toLocaleString('ru-RU') + " ₽";
@@ -2951,9 +2955,8 @@ RegionDostavki: (context) => {
             // Разворачиваем на весь экран
             try { tg.expand(); } catch (e) {}
 
-            // Красим шапку в синий. Текст и кнопки станут БЕЛЫМИ автоматически.
             try { 
-                tg.setHeaderColor('#0000aa'); 
+                tg.setHeaderColor('#F0F2F5'); 
                 tg.setBackgroundColor('#F0F2F5'); // Цвет фона самого приложения
             } catch (e) {}
         }
@@ -3037,6 +3040,8 @@ RegionDostavki: (context) => {
                     <option value="800 минут, 10Гб интернета">800 минут, 10Гб интернета</option>
                     <option value="2000 минут, 20Гб интернета">2000 минут, 20Гб интернета</option>
                     <option value="15 минут, 0,2Гб интернета">15 минут, 0,2Гб интернета</option>
+                    <option value="2000 минут, 1Гб интернета">2000 минут, 1Гб интернета</option>
+                    <option value="15 минут, 30Гб интернета">15 минут, 30Гб интернета</option>
                 </select>
             </div>
         </div>
