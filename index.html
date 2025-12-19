@@ -1677,6 +1677,12 @@
 
     document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
       input.addEventListener("focus", function() { this.select(); });
+      if (input.classList.contains('stepper-input') || input.type === 'number') {
+          input.addEventListener('input', function() {
+              // Заменяем всё, что не цифра, на пустоту
+              this.value = this.value.replace(/[^0-9]/g, '');
+          });
+      }
       if (!input.id.startsWith("mgr")) {
         input.addEventListener("blur", () => { if (input.value === "") input.value = "0"; });
       }
@@ -1830,6 +1836,16 @@ function clearFmcBundles() {
         }
     }
     
+    function escapeHtml(text) {
+        if (!text) return text;
+        return text.toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+    
     function closeToast() {
         document.getElementById('mobile-toast').classList.remove('visible');
     }
@@ -1935,6 +1951,8 @@ function clearFmcBundles() {
                 if (isActive) {
                     const nameEl = row.querySelector('.option-name');
                     let nameText = nameEl.innerText.replace('i', '').trim();
+                    const safeName = escapeHtml(nameText);
+                    const safeValue = escapeHtml(valueText); 
                     const infoIcon = row.querySelector('.info-icon');
                     let descText = "";
                     if (infoIcon) {
@@ -1952,7 +1970,7 @@ function clearFmcBundles() {
                         costHtml = `<div class="price-badge">безлимитно</div>`;
                     }
                     
-                    tableRows.push(`<tr><td style="width:70%"><div class="print-row-name">${nameText} <span style="font-weight:400; color:#555;">(${valueText})</span></div>${descText ? `<div class="print-row-desc">${descText}</div>` : ''}</td><td style="width:30%"><div class="print-row-value">${costHtml}</div></td></tr>`);
+                    tableRows.push(`<tr><td style="width:70%"><div class="print-row-name">${safeName} <span style="font-weight:400; color:#555;">(${safeValue})</span></div>${descText ? `<div class="print-row-desc">${descText}</div>` : ''}</td><td style="width:30%"><div class="print-row-value">${costHtml}</div></td></tr>`);
                 }
             });
 
@@ -2115,12 +2133,12 @@ function clearFmcBundles() {
                         );
                     } else {
                         // Если ошибка другая — показываем как есть
-                        showToast("error", "Ошибка сервера", errorMsg);
+                        showToast("error", "Ошибка сервера", escapeHtml(errorMsg));
                     }
                 }
             } catch (e) {
                 console.error(e);
-                showToast("error", "Ошибка сети", e.message);
+                showToast("error", "Ошибка сети", escapeHtml(e.message));
             }
 
         } else if (isMobile) {
@@ -2160,6 +2178,10 @@ function clearFmcBundles() {
     /* --- BUSINESS LOGIC --- */
 
     function resetForm() {
+        // --- ЗАЩИТА ОТ СЛУЧАЙНОГО НАЖАТИЯ ---
+        if (!confirm("Вы действительно хотите очистить весь расчет и начать заново?")) {
+            return; // Если нажал "Отмена", ничего не делаем
+        }
         document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
             if(!input.disabled && !input.id.startsWith("mgr")) input.value = 0;
         });
