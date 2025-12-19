@@ -488,7 +488,8 @@
     }
     .tooltip-content-hidden { display: none; }
   </style>
-  <!-- Yandex.Metrika counter -->
+  
+<!-- Yandex.Metrika counter -->
 <script type="text/javascript">
     (function(m,e,t,r,i,k,a){
         m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -501,6 +502,7 @@
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/105781169" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
+
 </head>
 <body>
 
@@ -2056,7 +2058,25 @@ function clearFmcBundles() {
                     showToast("success", "Готово!", "Расчет успешно отправлен вам в Telegram.", 0);
                 } else {
                     const errorData = await response.json();
-                    showToast("error", "Ошибка сервера", errorData.error || "Не удалось отправить расчет.");
+                    let errorMsg = errorData.error || "Не удалось отправить расчет.";
+
+                    // Проверяем, есть ли в ошибке слова про блокировку
+                    if (typeof errorMsg === 'string' && errorMsg.includes('blocked by the user')) {
+                        
+                        const botLink = "https://t.me/UisCalculatorBot"; 
+
+                        showToast(
+                            "error", 
+                            "Бот заблокирован", 
+                            `Вы ограничили отправку сообщений.<br><br>
+                             <a href="${botLink}" target="_blank" style="color: #0000aa; text-decoration: underline; font-weight: bold;">Нажмите сюда</a>, 
+                             чтобы открыть чат с ботом, и нажмите <b>Запустить</b> (или /start).<br>
+                             Затем попробуйте снова.`
+                        );
+                    } else {
+                        // Если ошибка другая — показываем как есть
+                        showToast("error", "Ошибка сервера", errorMsg);
+                    }
                 }
             } catch (e) {
                 console.error(e);
@@ -2919,6 +2939,45 @@ RegionDostavki: (context) => {
     // Initialize first FMC bundle to show default UI
     addFmcBundle(true);
     updateTotals();
+    /* --- YANDEX METRIKA GOALS --- */
+    document.addEventListener("DOMContentLoaded", function() {
+        // Функция для безопасной отправки цели
+        function sendGoal(targetName) {
+            if (typeof ym === 'function') {
+                ym(105781169, 'reachGoal', targetName);
+            }
+        }
+
+        // 1. Включение ВАТС
+        const vatsCheckbox = document.getElementById('VATS');
+        if (vatsCheckbox) {
+            vatsCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    sendGoal('vats_enable'); // Идентификатор цели в Метрике
+                }
+            });
+        }
+
+        // 2. Включение ОМНИ
+        const omniCheckbox = document.getElementById('OMNI');
+        if (omniCheckbox) {
+            omniCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    sendGoal('omni_enable'); // Идентификатор цели в Метрике
+                }
+            });
+        }
+
+        // 3. Включение Аналитики рекламы
+        const arCheckbox = document.getElementById('AR');
+        if (arCheckbox) {
+            arCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    sendGoal('analytics_enable'); // Идентификатор цели в Метрике
+                }
+            });
+        }
+    });
 </script>
 <!-- ============================================================== -->
 <!-- СКРЫТЫЙ ШАБЛОН ДЛЯ ОДНОГО НАБОРА СИМ-КАРТ (Добавьте в конец <body>) -->
