@@ -663,7 +663,7 @@
       <!-- TOTAL NUMBERS (Read Only) -->
       <div class="option-row">
         <div class="option-info">
-            <div class="option-name">Кол-во номеров UIS всего</div>
+            <div class="option-name">Лимит количества номеров UIS</div>
             <div class="option-meta">
                 <span id="cost-NomeraVATSVsego"></span>
                 <span id="limit-NomeraVATSVsego"></span>
@@ -688,7 +688,7 @@
     
     <!-- КНОПКА ДОБАВЛЕНИЯ НАБОРА -->
     <div style="text-align: center; margin: 15px 0 20px;">
-        <button id="add-fmc-bundle-btn" class="stepper-btn" style="width: auto; padding: 5px 15px; font-size: 14px; background: #E6F0FF; color: var(--color-primary); border: 1px solid var(--color-primary);" onclick="addFmcBundle(false, '200 минут, 1Гб интернета', 1)">
+        <button id="add-fmc-bundle-btn" class="stepper-btn" style="width: auto; padding: 5px 15px; font-size: 14px; background: #E6F0FF; color: var(--color-primary); border: 1px solid var(--color-primary);" onclick="addFmcBundle(false, '200 минут, 2Гб интернета', 1)">
             + Добавить набор SIM
         </button>
     </div>
@@ -1697,7 +1697,7 @@ let fmcUniqueIdCounter = 0;
 const MAX_FMC_BUNDLES = 5;
 
 // Добавляет новый набор по шаблону
-function addFmcBundle(isRestoring = false, initialTarif = '200 минут, 1Гб интернета', initialCount = 1) {
+function addFmcBundle(isRestoring = false, initialTarif = '200 минут, 2Гб интернета', initialCount = 1) {
     const currentCount = document.querySelectorAll('#fmc-bundles-container > .fmc-subgroup').length;
     if (currentCount >= MAX_FMC_BUNDLES) return;
 
@@ -2007,13 +2007,13 @@ function clearFmcBundles() {
                         if (count > 0 && tariffName !== 'нет') {
                             let pricePerSim = 0;
                             switch (tariffName) {
-                                case "200 минут, 1Гб интернета": pricePerSim = 810; break;
-                                case "600 минут, 5Гб интернета": pricePerSim = 1350; break;
-                                case "800 минут, 10Гб интернета": pricePerSim = 2050; break;
-                                case "2000 минут, 20Гб интернета": pricePerSim = 4600; break;
-                                case "15 минут, 0,2Гб интернета": pricePerSim = 400; break;
-                                case "2000 минут, 1Гб интернета": pricePerSim = 3600; break;
-                                case "15 минут, 30Гб интернета": pricePerSim = 3050; break;
+                                case "200 минут, 2Гб интернета": pricePerSim = 810; break;
+                                case "600 минут, 10Гб интернета": pricePerSim = 1350; break;
+                                case "800 минут, 20Гб интернета": pricePerSim = 2050; break;
+                                case "2000 минут, 40Гб интернета": pricePerSim = 4600; break;
+                                case "15 минут, 0,4Гб интернета": pricePerSim = 400; break;
+                                case "2000 минут, 2Гб интернета": pricePerSim = 3600; break;
+                                case "15 минут, 60Гб интернета": pricePerSim = 3050; break;
                             }
                             const totalCost = pricePerSim * count;
 
@@ -2563,7 +2563,7 @@ RegionDostavki: (context) => {
           context.set("VATS", true);
         }
         if (totalFmcBundles === 0) {
-            addFmcBundle(false, '200 минут, 1Гб интернета', 1);
+            addFmcBundle(false, '200 минут, 2Гб интернета', 1);
         }
     }
 },
@@ -2856,13 +2856,13 @@ RegionDostavki: (context) => {
             
             let pricePerSim = 0;
             switch (tarif) {
-                case "200 минут, 1Гб интернета": pricePerSim = 810; break;
-                case "600 минут, 5Гб интернета": pricePerSim = 1350; break;
-                case "800 минут, 10Гб интернета": pricePerSim = 2050; break;
-                case "2000 минут, 20Гб интернета": pricePerSim = 4600; break;
-                case "15 минут, 0,2Гб интернета": pricePerSim = 400; break;
-                case "2000 минут, 1Гб интернета": pricePerSim = 3600; break;
-                case "15 минут, 30Гб интернета": pricePerSim = 3050; break;
+                case "200 минут, 2Гб интернета": pricePerSim = 810; break;
+                case "600 минут, 10Гб интернета": pricePerSim = 1350; break;
+                case "800 минут, 20Гб интернета": pricePerSim = 2050; break;
+                case "2000 минут, 40Гб интернета": pricePerSim = 4600; break;
+                case "15 минут, 0,4Гб интернета": pricePerSim = 400; break;
+                case "2000 минут, 2Гб интернета": pricePerSim = 3600; break;
+                case "15 минут, 60Гб интернета": pricePerSim = 3050; break;
             }
             
             const costBundle = pricePerSim * count;
@@ -3081,13 +3081,13 @@ RegionDostavki: (context) => {
                 <div class="custom-select-trigger" onclick="openSelectModal('TarifFMC_INDEX_ID', 'Тариф на сим картах')">нет</div>
                 <select id="TarifFMC_INDEX_ID" class="hidden-native-select" onchange="runCascade('TarifFMC_INDEX_ID')">
                     <option value="нет">нет</option>
-                    <option value="200 минут, 1Гб интернета">200 минут, 1Гб интернета</option>
-                    <option value="600 минут, 5Гб интернета">600 минут, 5Гб интернета</option>
-                    <option value="800 минут, 10Гб интернета">800 минут, 10Гб интернета</option>
-                    <option value="2000 минут, 20Гб интернета">2000 минут, 20Гб интернета</option>
-                    <option value="15 минут, 0,2Гб интернета">15 минут, 0,2Гб интернета</option>
-                    <option value="2000 минут, 1Гб интернета">2000 минут, 1Гб интернета</option>
-                    <option value="15 минут, 30Гб интернета">15 минут, 30Гб интернета</option>
+                    <option value="200 минут, 2Гб интернета">200 минут, 2Гб интернета</option>
+                    <option value="600 минут, 10Гб интернета">600 минут, 10Гб интернета</option>
+                    <option value="800 минут, 20Гб интернета">800 минут, 20Гб интернета</option>
+                    <option value="2000 минут, 40Гб интернета">2000 минут, 40Гб интернета</option>
+                    <option value="15 минут, 0,4Гб интернета">15 минут, 0,4Гб интернета</option>
+                    <option value="2000 минут, 2Гб интернета">2000 минут, 2Гб интернета</option>
+                    <option value="15 минут, 60Гб интернета">15 минут, 60Гб интернета</option>
                 </select>
             </div>
         </div>
