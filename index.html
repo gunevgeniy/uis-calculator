@@ -1965,7 +1965,12 @@ function clearFmcBundles() {
 
                 if (isActive) {
                     const nameEl = row.querySelector('.option-name');
-                    let nameText = nameEl.innerText.replace('i', '').trim();
+
+                    const nameClone = nameEl.cloneNode(true);
+                    const icon = nameClone.querySelector('.info-icon');
+                    if (icon) icon.remove();
+
+                    let nameText = nameClone.innerText.trim();
                     const safeName = escapeHtml(nameText);
                     const safeValue = escapeHtml(valueText); 
                     const infoIcon = row.querySelector('.info-icon');
