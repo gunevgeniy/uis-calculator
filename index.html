@@ -2238,13 +2238,13 @@ function clearFmcBundles() {
     function getSelect(id) { return document.getElementById(id)?.value ?? ""; }
 
     const formulaMap = {
-        VATS: { cost: () => getCheckbox("VATS") ? 1200 : 0 },
-        VATSPRO: { cost: () => getCheckbox("VATSPRO") ? 2200 : 0 },
+        VATS: { cost: () => getCheckbox("VATS") ? 1500 : 0 },
+        VATSPRO: { cost: () => getCheckbox("VATSPRO") ? 2800 : 0 },
         KolvoSotrudnikovVATS: {
             limit: () => {
                 const val = getNumber("KolvoSotrudnikovVATS");
                 const vatspro = getCheckbox("VATSPRO");
-                return val < 4 ? 0 : (val - 3) * (vatspro ? 200 : 120);
+                return val < 4 ? 0 : (val - 3) * (vatspro ? 250 : 180);
             }
         },
         DlitelnostHraneniyaVATS: {
@@ -2287,18 +2287,18 @@ function clearFmcBundles() {
         NomeraVATSVsego: { limit: () => { const val = getNumber("NomeraVATSVsego"); return val < 4 ? 0 : (val - 3) * 100; } },
         
         KolvoFMC: { cost: () => 0 },
-        OMNI: { cost: () => getCheckbox("OMNI") ? 2600 : 0 },
+        OMNI: { cost: () => getCheckbox("OMNI") ? 3200 : 0 },
         KolvoSotrudnikovOMNI: {
             limit: () => {
                 const val = getNumber("KolvoSotrudnikovOMNI");
                 if (val < 4) return 0;
-                if (val < 21) return (val - 3) * 590;
-                if (val < 31) return (val - 3) * 540;
-                if (val < 41) return (val - 3) * 490;
-                if (val < 101) return (val - 3) * 440;
-                if (val < 201) return (val - 3) * 390;
-                if (val < 1001) return (val - 3) * 340;
-                if (val < 10001) return (val - 3) * 290;
+                if (val < 21) return (val - 3) * 690;
+                if (val < 31) return (val - 3) * 640;
+                if (val < 41) return (val - 3) * 590;
+                if (val < 101) return (val - 3) * 540;
+                if (val < 201) return (val - 3) * 490;
+                if (val < 1001) return (val - 3) * 440;
+                if (val < 10001) return (val - 3) * 390;
                 return "уменьшите до 10000";
             }
         },
@@ -2306,7 +2306,7 @@ function clearFmcBundles() {
         KolvoWABA: { cost: () => getNumber("KolvoWABA") > 0 ? 4000 : 0, limit: () => getNumber("KolvoWABA") * 5000 },
         TgVkAvito: { cost: () => getCheckbox("TgVkAvito") ? "вкл" : 0 },
         OMNIKnopka: { cost: () => getCheckbox("OMNIKnopka") ? "вкл" : 0 },
-        AR: { cost: () => getCheckbox("AR") ? 2000 : 0 },
+        AR: { cost: () => getCheckbox("AR") ? 2500 : 0 },
         KolvoSaitov: { limit: () => getNumber("KolvoSaitov") ? "вкл" : 0 },
         KolvoPolzovatelskihIstochnikov: { limit: () => { const val = getNumber("KolvoPolzovatelskihIstochnikov"); if (val === 250) return 1000; if (val === 500) return 2000; if (val === 5000) return 3000; return 0; } },
         PaketTrafika: {
